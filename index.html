@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+    <!--Test for safari, then add polyfill lib with intl features-->
+    <script>
+    if (/^((?!chrome|android).)*safari/i.test(navigator.userAgent)) { //instead of navigator.userAgent.match(/safari/i), as chrome/android include safari in userAgent tags
+      var script = document.createElement('SCRIPT');
+      script.src = 'https://cdn.polyfill.io/v2/polyfill.min.js?features=Intl.~locale.en&Intl.~locale.id&unknown=ignore';
+      document.getElementsByTagName('head')[0].appendChild(script); //or append features string to source...
+    }
+    </script>
+    <script src="https://cdn.polyfill.io/v2/polyfill.min.js"></script>
+
+    <meta name="description" content="PetaBencana REM" />
+    <title>PetaBencana REM</title>
+    <base href="/">
+  </head>
+
+  <body aurelia-app="main">
+    <script src="scripts/vendor-bundle.js" data-main="aurelia-bootstrapper"></script>
+  </body>
+</html>

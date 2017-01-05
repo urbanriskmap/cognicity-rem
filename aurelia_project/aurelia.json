@@ -98,6 +98,7 @@
           "aurelia-bootstrapper",
           "aurelia-dependency-injection",
           "aurelia-event-aggregator",
+          "aurelia-fetch-client",
           "aurelia-framework",
           "aurelia-history",
           "aurelia-history-browser",
@@ -115,7 +116,13 @@
           "aurelia-task-queue",
           "aurelia-templating",
           "aurelia-templating-binding",
+          "jquery",
           "text",
+          {
+            "name": "aurelia-i18n",
+            "path": "../node_modules/aurelia-i18n/dist/amd",
+            "main": "aurelia-i18n"
+          },
           {
             "name": "aurelia-templating-resources",
             "path": "../node_modules/aurelia-templating-resources/dist/amd",
@@ -131,6 +138,44 @@
             "path": "../node_modules/aurelia-testing/dist/amd",
             "main": "aurelia-testing",
             "env": "dev"
+          },
+          {
+            "name": "bootstrap",
+            "path": "../node_modules/bootstrap/dist",
+            "main": "js/bootstrap.min",
+            "deps": ["jquery"],
+            "exports": "$",
+            "resources": [
+              "css/bootstrap.css"
+            ]
+          },
+          {
+            "name": "i18next",
+            "path": "../node_modules/i18next/dist/umd",
+            "main": "i18next"
+          },
+          {
+            "name": "i18next-xhr-backend",
+            "path": "../node_modules/i18next-xhr-backend/dist/umd",
+            "main": "i18nextXHRBackend"
+          },
+          {
+            "name": "jwt-decode",
+            "path": "../node_modules/jwt-decode/lib",
+            "main": "index"
+          },
+          {
+            "name": "leaflet",
+            "path": "../node_modules/leaflet/dist",
+            "main": "leaflet",
+            "resources": [
+              "leaflet.css"
+            ]
+          },
+          {
+            "name": "topojson-client",
+            "path": "../node_modules/topojson-client/dist",
+            "main": "topojson-client"
           }
         ]
       }

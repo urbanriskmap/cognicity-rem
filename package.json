@@ -10,15 +10,26 @@
     "start": "au run --env dev --watch",
     "test": "au test",
     "build": "rm -rf scripts/* && au build --env prod",
-    "build-dev" : "rm -rf scripts/* && au build --env dev"
+    "build-dev": "rm -rf scripts/* && au build --env dev"
   },
   "license": "MIT",
   "dependencies": {
-    "aurelia-bootstrapper": "^1.0.0",
     "aurelia-animator-css": "^1.0.0",
+    "aurelia-bootstrapper": "^1.0.0",
+    "aurelia-fetch-client": "^1.1.0",
+    "aurelia-i18n": "^1.2.3",
     "bluebird": "^3.4.1",
+    "bootstrap": "^3.3.7",
+    "i18next": "^4.1.4",
+    "i18next-xhr-backend": "^1.2.1",
+    "jquery": "^3.1.1",
+    "jwt-decode": "^2.1.0",
+    "leaflet": "^1.0.2",
+    "nprogress": "^0.2.0",
     "requirejs": "^2.3.2",
-    "text": "github:requirejs/text#latest"
+    "text": "github:requirejs/text#latest",
+    "topojson-client": "^2.1.0",
+    "whatwg-fetch": "^2.0.1"
   },
   "peerDependencies": {},
   "devDependencies": {

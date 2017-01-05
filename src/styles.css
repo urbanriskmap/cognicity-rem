@@ -1,0 +1,21 @@
+body { padding-top: 70px; }
+
+section {
+  margin: 0 20px;
+}
+
+a:focus {
+  outline: none;
+}
+
+.no-selection {
+  margin: 20px;
+}
+
+.panel {
+  margin: 20px;
+}
+
+.navbar-toggle {
+    z-index:3;
+}

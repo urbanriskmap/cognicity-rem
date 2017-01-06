@@ -1,4 +1,47 @@
-define('app',['exports', 'aurelia-i18n', 'aurelia-fetch-client', './utils'], function (exports, _aureliaI18n, _aureliaFetchClient, _utils) {
+define('api',['exports', 'aurelia-framework', 'aurelia-fetch-client'], function (exports, _aureliaFramework, _aureliaFetchClient) {
+  'use strict';
+
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
+  exports.API = undefined;
+
+  function _classCallCheck(instance, Constructor) {
+    if (!(instance instanceof Constructor)) {
+      throw new TypeError("Cannot call a class as a function");
+    }
+  }
+
+  var _dec, _class;
+
+  var DATA_URL = 'https://data.petabencana.id';
+
+  var auth = { headers: { 'Authorization': 'Bearer ' + localStorage.getItem('id_token') } };
+
+  var API = exports.API = (_dec = (0, _aureliaFramework.inject)(_aureliaFetchClient.HttpClient), _dec(_class = function API(http) {
+    var _this = this;
+
+    _classCallCheck(this, API);
+
+    this.isRequesting = false;
+
+    this.getInfrastructure = function (type) {
+      _this.isRequesting = true;
+      return _this.http.fetch(DATA_URL + '/infrastructure/' + type, auth).then(function (response) {
+        _this.isRequesting = false;
+        if (response.status >= 400) throw new Error('Error calling data server');else return response.json();
+      }).catch(function (err) {
+        _this.isRequesting = false;
+        console.log('Error calling data server');
+        throw new Error('Error calling data server', err);
+      });
+    };
+
+    this.http = http;
+    var self = this;
+  }) || _class);
+});
+define('app',['exports', 'aurelia-framework', 'aurelia-i18n', './api', './utils'], function (exports, _aureliaFramework, _aureliaI18n, _api, _utils) {
   'use strict';
 
   Object.defineProperty(exports, "__esModule", {
@@ -12,20 +55,20 @@ define('app',['exports', 'aurelia-i18n', 'aurelia-fetch-client', './utils'], fun
     }
   }
 
-  var _class, _temp;
+  var _dec, _class;
 
   var AUTH0_CLIENT_ID = '';
   var AUTH0_DOMAIN = '';
 
-  var App = exports.App = (_temp = _class = function () {
-    function App(i18n, http) {
+  var App = exports.App = (_dec = (0, _aureliaFramework.inject)(_api.API, _aureliaI18n.I18N), _dec(_class = function () {
+    function App(api, i18n) {
       _classCallCheck(this, App);
 
       this.lock = new Auth0Lock(AUTH0_CLIENT_ID, AUTH0_DOMAIN);
       this.isAuthenticated = false;
 
+      this.api = api;
       this.i18n = i18n;
-      this.http = http;
       var self = this;
 
       if ((0, _utils.tokenIsExpired)()) {
@@ -52,7 +95,7 @@ define('app',['exports', 'aurelia-i18n', 'aurelia-fetch-client', './utils'], fun
       config.title = this.i18n.tr('title');
       config.options.pushState = true;
       config.options.root = '/';
-      config.map([{ route: '', moduleId: 'home', title: 'Home' }, { route: 'map', moduleId: 'map', title: 'Map', name: 'Map' }]);
+      config.map([{ route: '', moduleId: 'home', name: 'home', title: 'Home' }, { route: 'map', moduleId: 'map', name: 'map', title: 'Map' }]);
 
       this.router = router;
     };
@@ -68,7 +111,7 @@ define('app',['exports', 'aurelia-i18n', 'aurelia-fetch-client', './utils'], fun
     };
 
     return App;
-  }(), _class.inject = [_aureliaI18n.I18N, _aureliaFetchClient.HttpClient], _temp);
+  }()) || _class);
 });
 define('environment',["exports"], function (exports) {
   "use strict";
@@ -154,7 +197,7 @@ define('main',['exports', './environment', 'aurelia-i18n', 'i18next-xhr-backend'
     });
   }
 });
-define('map',['exports', 'aurelia-router', './utils'], function (exports, _aureliaRouter, _utils) {
+define('map',['exports', 'aurelia-framework', 'aurelia-router', 'aurelia-i18n', 'leaflet', './api', './utils'], function (exports, _aureliaFramework, _aureliaRouter, _aureliaI18n, _leaflet, _api, _utils) {
   'use strict';
 
   Object.defineProperty(exports, "__esModule", {
@@ -162,18 +205,83 @@ define('map',['exports', 'aurelia-router', './utils'], function (exports, _aurel
   });
   exports.Map = undefined;
 
+  var L = _interopRequireWildcard(_leaflet);
+
+  function _interopRequireWildcard(obj) {
+    if (obj && obj.__esModule) {
+      return obj;
+    } else {
+      var newObj = {};
+
+      if (obj != null) {
+        for (var key in obj) {
+          if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key];
+        }
+      }
+
+      newObj.default = obj;
+      return newObj;
+    }
+  }
+
   function _classCallCheck(instance, Constructor) {
     if (!(instance instanceof Constructor)) {
       throw new TypeError("Cannot call a class as a function");
     }
   }
 
-  var Map = exports.Map = function () {
-    function Map() {
+  var _dec, _class;
+
+  var config = {
+    region: 'jbd',
+    bounds: {
+      sw: [-6.733, 106.480],
+      ne: [-5.880, 107.175]
+    }
+  };
+
+  var Map = exports.Map = (_dec = (0, _aureliaFramework.inject)(_api.API, _aureliaI18n.I18N), _dec(_class = function () {
+    function Map(api, i18n) {
+      var _this = this;
+
       _classCallCheck(this, Map);
 
+      this.api = api;
+      this.i18n = i18n;
+      var self = this;
       this.message = "I'm the Map";
+
+      api.getInfrastructure('waterways').then(function (data) {
+        return _this.waterways = JSON.stringify(data);
+      }).catch(function (err) {
+        return _this.error = err.message;
+      });
+      api.getInfrastructure('pumps').then(function (data) {
+        return _this.pumps = JSON.stringify(data);
+      }).catch(function (err) {
+        return _this.error = err.message;
+      });
+      api.getInfrastructure('floodgates').then(function (data) {
+        return _this.floodgates = JSON.stringify(data);
+      }).catch(function (err) {
+        return _this.error = err.message;
+      });
     }
+
+    Map.prototype.attached = function attached() {
+      this.map = L.map('mapContainer', {
+        attributionControl: false
+      }).fitBounds([config.bounds.sw, config.bounds.ne]);
+
+      L.tileLayer(self.config.tile_layer, {
+        attribution: 'Map data &copy; <a href="http://openstreetmap.org">OSM</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC BY-SA</a>, Imagery &copy; <a href="http://mapbox.com">Mapbox</a>',
+        detectRetina: true,
+        subdomains: 'abcd',
+        minZoom: 0,
+        maxZoom: 18,
+        ext: 'png'
+      }).addTo(this.map);
+    };
 
     Map.prototype.canActivate = function canActivate() {
       if ((0, _utils.tokenIsExpired)()) {
@@ -184,7 +292,7 @@ define('map',['exports', 'aurelia-router', './utils'], function (exports, _aurel
     };
 
     return Map;
-  }();
+  }()) || _class);
 });
 define('utils',['exports', 'jwt-decode'], function (exports, jwtDecode) {
   'use strict';
@@ -208,14 +316,67 @@ define('utils',['exports', 'jwt-decode'], function (exports, jwtDecode) {
     return true;
   }
 });
-define('resources/index',["exports"], function (exports) {
-  "use strict";
+define('resources/index',['exports'], function (exports) {
+  'use strict';
 
   Object.defineProperty(exports, "__esModule", {
     value: true
   });
   exports.configure = configure;
-  function configure(config) {}
+  function configure(config) {
+    config.globalResources(['./elements/loading-indicator']);
+  }
+});
+define('resources/elements/loading-indicator',['exports', 'nprogress', 'aurelia-framework'], function (exports, _nprogress, _aureliaFramework) {
+  'use strict';
+
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
+  exports.LoadingIndicator = undefined;
+
+  var nprogress = _interopRequireWildcard(_nprogress);
+
+  function _interopRequireWildcard(obj) {
+    if (obj && obj.__esModule) {
+      return obj;
+    } else {
+      var newObj = {};
+
+      if (obj != null) {
+        for (var key in obj) {
+          if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key];
+        }
+      }
+
+      newObj.default = obj;
+      return newObj;
+    }
+  }
+
+  function _classCallCheck(instance, Constructor) {
+    if (!(instance instanceof Constructor)) {
+      throw new TypeError("Cannot call a class as a function");
+    }
+  }
+
+  nprogress.configure({ showSpinner: false });
+
+  var LoadingIndicator = exports.LoadingIndicator = (0, _aureliaFramework.decorators)((0, _aureliaFramework.noView)(['nprogress/nprogress.css']), (0, _aureliaFramework.bindable)({ name: 'loading', defaultValue: false })).on(function () {
+    function _class() {
+      _classCallCheck(this, _class);
+    }
+
+    _class.prototype.loadingChanged = function loadingChanged(newValue) {
+      if (newValue) {
+        nprogress.start();
+      } else {
+        nprogress.done();
+      }
+    };
+
+    return _class;
+  }());
 });
 define('aurelia-templating-resources/compose',['exports', 'aurelia-dependency-injection', 'aurelia-task-queue', 'aurelia-templating', 'aurelia-pal'], function (exports, _aureliaDependencyInjection, _aureliaTaskQueue, _aureliaTemplating, _aureliaPal) {
   'use strict';
@@ -3755,8 +3916,85 @@ define('aurelia-i18n/base-i18n',['exports', './i18n', 'aurelia-event-aggregator'
     return BaseI18N;
   }(), _class.inject = [_i18n.I18N, Element, _aureliaEventAggregator.EventAggregator], _temp);
 });
-define('text!app.html', ['module'], function(module) { module.exports = "<template>\n\n  <require from=\"bootstrap/css/bootstrap.css\"></require>\n  <require from=\"./styles.css\"></require>\n\n  <nav class=\"navbar navbar-inverse navbar-fixed-top\" role=\"navigation\">\n    <div class=\"container-fluid\">\n      <div class=\"navbar-header\">\n        <a class=\"navbar-brand\" href=\"#\">\n          <i class=\"fa fa-user\"></i>\n          <span t=\"title\"/>\n        </a>\n      </div>\n      <div class=\"navbar-collapse collapse\">\n        <ul class=\"nav navbar-nav navbar-right\">\n          <li if.bind=\"!isAuthenticated\"><a href=\"#\" click.delegate=\"login()\"><span t=\"login\" /></li>\n          <li if.bind=\"isAuthenticated\"><a href=\"#\" click.delegate=\"logout()\"><span t=\"logout\" /></li>\n        </ul>\n      </div>\n    </div>\n  </nav>\n\n  <div class=\"container\">\n    <div class=\"row\">\n      <router-view class=\"col-md-12\"></router-view>\n    </div>\n  </div>\n\n</template>\n"; });
-define('text!styles.css', ['module'], function(module) { module.exports = "body { padding-top: 70px; }\n\nsection {\n  margin: 0 20px;\n}\n\na:focus {\n  outline: none;\n}\n\n.no-selection {\n  margin: 20px;\n}\n\n.panel {\n  margin: 20px;\n}\n\n.navbar-toggle {\n    z-index:3;\n}\n"; });
+define('jwt-decode/base64_url_decode',['require','exports','module','./atob'],function (require, exports, module) {var atob = require('./atob');
+
+function b64DecodeUnicode(str) {
+  return decodeURIComponent(atob(str).replace(/(.)/g, function (m, p) {
+    var code = p.charCodeAt(0).toString(16).toUpperCase();
+    if (code.length < 2) {
+      code = '0' + code;
+    }
+    return '%' + code;
+  }));
+}
+
+module.exports = function(str) {
+  var output = str.replace(/-/g, "+").replace(/_/g, "/");
+  switch (output.length % 4) {
+    case 0:
+      break;
+    case 2:
+      output += "==";
+      break;
+    case 3:
+      output += "=";
+      break;
+    default:
+      throw "Illegal base64url string!";
+  }
+
+  try{
+    return b64DecodeUnicode(output);
+  } catch (err) {
+    return atob(output);
+  }
+};
+
+});
+
+define('jwt-decode/atob',['require','exports','module'],function (require, exports, module) {/**
+ * The code was extracted from:
+ * https://github.com/davidchambers/Base64.js
+ */
+
+var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+
+function InvalidCharacterError(message) {
+  this.message = message;
+}
+
+InvalidCharacterError.prototype = new Error();
+InvalidCharacterError.prototype.name = 'InvalidCharacterError';
+
+function polyfill (input) {
+  var str = String(input).replace(/=+$/, '');
+  if (str.length % 4 == 1) {
+    throw new InvalidCharacterError("'atob' failed: The string to be decoded is not correctly encoded.");
+  }
+  for (
+    // initialize result and counters
+    var bc = 0, bs, buffer, idx = 0, output = '';
+    // get next character
+    buffer = str.charAt(idx++);
+    // character found in table? initialize bit storage and add its ascii value;
+    ~buffer && (bs = bc % 4 ? bs * 64 + buffer : buffer,
+      // and if not first of each 4 characters,
+      // convert the first 8 bits to one ascii character
+      bc++ % 4) ? output += String.fromCharCode(255 & bs >> (-2 * bc & 6)) : 0
+  ) {
+    // try to find character in table (0-63, not found => -1)
+    buffer = chars.indexOf(buffer);
+  }
+  return output;
+}
+
+
+module.exports = typeof window !== 'undefined' && window.atob && window.atob.bind(window) || polyfill;
+
+});
+
+define('text!app.html', ['module'], function(module) { module.exports = "<template>\n\n  <require from=\"bootstrap/css/bootstrap.css\"></require>\n  <require from=\"./styles.css\"></require>\n\n  <nav class=\"navbar navbar-inverse navbar-fixed-top\" role=\"navigation\">\n    <div class=\"container-fluid\">\n      <div class=\"navbar-header\">\n        <a class=\"navbar-brand\" route-href=\"route: home\">\n          <i class=\"fa fa-user\"></i>\n          <span t=\"title\"/>\n        </a>\n      </div>\n      <div class=\"navbar-collapse collapse\">\n        <ul if.bind=\"isAuthenticated\" class=\"nav navbar-nav navbar-right\">\n          <li><a route-href=\"route: map\"><span t=\"map\" /></a></li>\n          <li><a href=\"#\" click.delegate=\"logout()\"><span t=\"logout\" /></a></li>\n        </ul>\n        <ul if.bind=\"!isAuthenticated\" class=\"nav navbar-nav navbar-right\">\n          <li><a href=\"#\" click.delegate=\"login()\"><span t=\"login\" /></a></li>\n        </ul>\n      </div>\n    </div>\n  </nav>\n\n  <loading-indicator loading.bind=\"router.isNavigating || api.isRequesting\"></loading-indicator>\n\n  <div class=\"container-fluid\">\n    <div class=\"row\">\n      <router-view class=\"col-md-12\"></router-view>\n    </div>\n  </div>\n\n</template>\n"; });
+define('text!styles.css', ['module'], function(module) { module.exports = "body { padding-top: 70px; }\n\nsection {\n  margin: 0 20px;\n}\n\na:focus {\n  outline: none;\n}\n\n.navbar-nav li.loader {\n    margin: 12px 24px 0 6px;\n}\n\n.no-selection {\n  margin: 20px;\n}\n\n.panel {\n  margin: 20px;\n}\n\n.button-bar {\n  right: 0;\n  left: 0;\n  bottom: 0;\n  border-top: 1px solid #ddd;\n  background: white;\n}\n\n.button-bar > button {\n  float: right;\n  margin: 20px;\n}\n\nli.list-group-item {\n  list-style: none;\n}\n\nli.list-group-item > a {\n  text-decoration: none;\n}\n\nli.list-group-item.active > a {\n  color: white;\n"; });
 define('text!home.html', ['module'], function(module) { module.exports = "<template>\n  <div class=\"no-selection text-center\">\n    <h2>${message}</h2>\n  </div>\n</template>\n"; });
-define('text!map.html', ['module'], function(module) { module.exports = "<template>\n  <div class=\"no-selection text-center\">\n    <h2>${message}</h2>\n  </div>\n</template>\n"; });
+define('text!map.html', ['module'], function(module) { module.exports = "<template>\n  <require from=\"leaflet/leaflet.css\"></require>\n\n  <div class=\"no-selection text-center\">\n\n    <!-- Error Message Box -->\n    <div if.bind=\"error\" class=\"alert alert-danger\" role=\"alert\">\n      <span class=\"sr-only\">Error:</span>\n      ${error}\n    </div>\n\n    <div id=\"mapContainer\" style=\"height:800px\"></div>\n\n    <h3>Waterways</h3>\n    <div>\n      <h4>${!waterways ? 'Loading' : 'Ready'}</h4>\n      <pre>${waterways}</pre>\n    </div>\n    <h3>Pumps</h3>\n    <div>\n      <h4>${!pumps ? 'Loading' : 'Ready'}</h4>\n      <pre>${pumps}</pre>\n    </div>\n    <h3>Flood Gates</h3>\n    <div>\n      <h4>${!floodgates ? 'Loading' : 'Ready'}</h4>\n      <pre>${floodgates}</pre>\n    </div>\n  </div>\n</template>\n"; });
 //# sourceMappingURL=app-bundle.js.map

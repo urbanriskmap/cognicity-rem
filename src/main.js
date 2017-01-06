@@ -23,18 +23,19 @@ export function configure(aurelia) {
     aurelia.use.plugin('aurelia-testing');
   }
 
-  aurelia.use.plugin('aurelia-i18n', (instance) => {
-    instance.i18next.use(Backend);
-    return instance.setup({
-      backend: {
-        loadPath: './locales/{{lng}}/{{ns}}.json'
-      },
-      lng : 'id',
-      attributes : ['t','i18n'],
-      fallbackLng : 'en',
-      debug : true
+  aurelia.use
+    .plugin('aurelia-i18n', (instance) => {
+      instance.i18next.use(Backend);
+      return instance.setup({
+        backend: {
+          loadPath: './locales/{{lng}}/{{ns}}.json'
+        },
+        lng : 'id',
+        attributes : ['t','i18n'],
+        fallbackLng : 'en',
+        debug : true
+      });
     });
-  });
 
   aurelia.start().then(() => aurelia.setRoot());
 }

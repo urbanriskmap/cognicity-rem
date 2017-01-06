@@ -1,5 +1,30 @@
 <template>
+  <require from="leaflet/leaflet.css"></require>
+
   <div class="no-selection text-center">
-    <h2>${message}</h2>
+
+    <!-- Error Message Box -->
+    <div if.bind="error" class="alert alert-danger" role="alert">
+      <span class="sr-only">Error:</span>
+      ${error}
+    </div>
+
+    <div id="mapContainer" style="height:800px"></div>
+
+    <h3>Waterways</h3>
+    <div>
+      <h4>${!waterways ? 'Loading' : 'Ready'}</h4>
+      <pre>${waterways}</pre>
+    </div>
+    <h3>Pumps</h3>
+    <div>
+      <h4>${!pumps ? 'Loading' : 'Ready'}</h4>
+      <pre>${pumps}</pre>
+    </div>
+    <h3>Flood Gates</h3>
+    <div>
+      <h4>${!floodgates ? 'Loading' : 'Ready'}</h4>
+      <pre>${floodgates}</pre>
+    </div>
   </div>
 </template>

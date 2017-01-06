@@ -1,21 +1,23 @@
+import { inject } from 'aurelia-framework';
 import { I18N } from 'aurelia-i18n';
-import { HttpClient } from 'aurelia-fetch-client';
+
+import { API } from './api';
 import { tokenIsExpired } from './utils';
 
 // TODO: Move into environment variables
+// TODO: Check credentials and log an error if incorrect
 const AUTH0_CLIENT_ID = '';
 const AUTH0_DOMAIN = '';
 
+@inject(API, I18N)
 export class App {
 
   lock = new Auth0Lock(AUTH0_CLIENT_ID, AUTH0_DOMAIN);
   isAuthenticated = false;
 
-  static inject = [I18N, HttpClient];
-
-  constructor(i18n, http) {
+  constructor(api, i18n) {
+    this.api = api;
     this.i18n = i18n;
-    this.http = http;
     var self = this;
 
     if (tokenIsExpired()) {
@@ -44,8 +46,8 @@ export class App {
     config.options.pushState = true;
     config.options.root = '/';
     config.map([
-      { route: '', moduleId: 'home', title: 'Home' },
-      { route: 'map', moduleId: 'map', title: 'Map', name: 'Map' }
+      { route: '', moduleId: 'home', name: 'home', title: 'Home' },
+      { route: 'map', moduleId: 'map', name: 'map', title: 'Map' }
     ]);
 
     this.router = router;

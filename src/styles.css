@@ -1,8 +1,4 @@
-body { padding-top: 70px; }
-
-section {
-  margin: 0 20px;
-}
+body { padding-top: 50px; }
 
 a:focus {
   outline: none;
@@ -13,11 +9,11 @@ a:focus {
 }
 
 .no-selection {
-  margin: 20px;
+  margin: 10px;
 }
 
 .panel {
-  margin: 20px;
+  margin: 10px;
 }
 
 .button-bar {

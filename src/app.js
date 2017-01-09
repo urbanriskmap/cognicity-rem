@@ -3,6 +3,7 @@ import { I18N } from 'aurelia-i18n';
 
 import { API } from './api';
 import { tokenIsExpired } from './utils';
+import { Redirect } from 'aurelia-router';
 
 // TODO: Move into environment variables
 // TODO: Check credentials and log an error if incorrect
@@ -40,6 +41,7 @@ export class App {
         localStorage.setItem('profile', JSON.stringify(profile));
         self.isAuthenticated = true;
         self.lock.hide();
+        return new Redirect('map');
       });
     });
   }
@@ -64,5 +66,6 @@ export class App {
     localStorage.removeItem('profile');
     localStorage.removeItem('id_token');
     this.isAuthenticated = false;
+    return new Redirect('');
   }
 }

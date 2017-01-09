@@ -1,7 +1,7 @@
 <template>
   <require from="leaflet/leaflet.css"></require>
 
-  <div class="no-selection text-center">
+  <div class="map">
 
     <!-- Error Message Box -->
     <div if.bind="error" class="alert alert-danger" role="alert">
@@ -11,27 +11,35 @@
 
     <!-- Map -->
     <!-- TODO: Set size dynamically -->
-    <div id="mapContainer" style="height:400px"></div>
+    <div id="mapContainer" style="height:${mapHeight}px"></div>
 
     <!-- Data Table -->
-    <div id="tableContainer" style="overflow-y: scroll; height:300px;">
-      <table class="table table-striped" aurelia-table="data.bind: users;
-        display-data.bind: $displayData; current-page.bind: currentPage;
-        page-size.bind: pageSize; total-items.bind: totalItems;">
+    <div id="tableContainer" style="overflow-y: scroll; height:${tableHeight}px;">
+      <table class="table table-striped" aurelia-table="data.bind: floodAreas; display-data.bind: $floodAreas">
         <thead>
           <tr>
+            <th>ID</th>
             <th>Name</th>
-            <th>Age</th>
-            <th>E-mail</th>
-            <th>Address</th>
+            <th>Reports</th>
+            <th>Local Areas</th>
           </tr>
         </thead>
         <tbody>
-          <tr repeat.for="user of $displayData">
-            <td>${user.name}</td>
-            <td>${user.age}</td>
-            <td><a href="mailto:${user.email}">${user.email}</a></td>
-            <td>${user.address.street + ', ' + user.address.city}</td>
+          <tr repeat.for="area of $floodAreas">
+            <td>
+              <a data-toggle="collapse" href="#localAreas${$index}" aria-expanded="false" aria-controls="localAreas${$index}">
+                ${$index}
+              </a>
+            </td>
+            <td>${area.name}</td>
+            <td>0</td>
+            <td>
+              <div class="collapse" id="localAreas${$index}">
+                <div class="well">
+                  TODO
+                </div>
+              </div>
+            </td>
           </tr>
         </tbody>
       </table>

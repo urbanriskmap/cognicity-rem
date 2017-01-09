@@ -158,6 +158,11 @@
             ]
           },
           {
+            "name": "element-resize-detector",
+            "path": "../node_modules/element-resize-detector/dist",
+            "main": "element-resize-detector"
+          },
+          {
             "name": "i18next",
             "path": "../node_modules/i18next/dist/umd",
             "main": "i18next"

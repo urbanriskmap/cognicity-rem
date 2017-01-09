@@ -9,22 +9,41 @@
       ${error}
     </div>
 
-    <div id="mapContainer" style="height:800px"></div>
+    <!-- Map -->
+    <!-- TODO: Set size dynamically -->
+    <div id="mapContainer" style="height:400px"></div>
 
-    <h3>Waterways</h3>
-    <div>
-      <h4>${!waterways ? 'Loading' : 'Ready'}</h4>
-      <pre>${waterways}</pre>
+    <!-- Data Table -->
+    <div id="tableContainer" style="overflow-y: scroll; height:300px;">
+      <table class="table table-striped" aurelia-table="data.bind: users;
+        display-data.bind: $displayData; current-page.bind: currentPage;
+        page-size.bind: pageSize; total-items.bind: totalItems;">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Age</th>
+            <th>E-mail</th>
+            <th>Address</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr repeat.for="user of $displayData">
+            <td>${user.name}</td>
+            <td>${user.age}</td>
+            <td><a href="mailto:${user.email}">${user.email}</a></td>
+            <td>${user.address.street + ', ' + user.address.city}</td>
+          </tr>
+        </tbody>
+      </table>
     </div>
-    <h3>Pumps</h3>
-    <div>
-      <h4>${!pumps ? 'Loading' : 'Ready'}</h4>
-      <pre>${pumps}</pre>
-    </div>
-    <h3>Flood Gates</h3>
-    <div>
-      <h4>${!floodgates ? 'Loading' : 'Ready'}</h4>
-      <pre>${floodgates}</pre>
-    </div>
+
+    <!-- Pagination -->
+    <!--<div class="row">
+      <div class="col-md-12">
+        <aut-pagination current-page.bind="currentPage" page-size.bind="pageSize" total-items.bind="totalItems"
+        pagination-size.bind="5" boundary-links.bind="true"> </aut-pagination>
+      </div>
+    </div>-->
+
   </div>
 </template>

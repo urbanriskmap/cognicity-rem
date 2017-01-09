@@ -124,6 +124,14 @@
             "main": "aurelia-i18n"
           },
           {
+            "name": "aurelia-table",
+            "path": "../node_modules/au-table/dist/amd",
+            "main": "index",
+            "resources": [
+              "au-table-pagination.html"
+            ]
+          },
+          {
             "name": "aurelia-templating-resources",
             "path": "../node_modules/aurelia-templating-resources/dist/amd",
             "main": "aurelia-templating-resources"

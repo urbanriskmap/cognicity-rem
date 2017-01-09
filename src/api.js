@@ -6,7 +6,7 @@ import { HttpClient } from 'aurelia-fetch-client';
 const DATA_URL = 'https://data.petabencana.id';
 
 // Authentication headers
-const auth = { headers: { 'Authorization': 'Bearer ' + localStorage.getItem('id_token') } }
+const auth = { headers: { 'Authorization': 'Bearer ' + localStorage.getItem('id_token') } };
 
 // Wrapper class for API calls to Cognicity Data API
 @inject(HttpClient)
@@ -18,7 +18,6 @@ export class API {
   // Build the class injecting the HTTP client
   constructor(http) {
     this.http = http;
-    var self = this;
   }
 
   // TODO: Error handling
@@ -33,7 +32,6 @@ export class API {
     })
     .catch((err) => {
       this.isRequesting = false;
-      console.log('Error calling data server');
       throw new Error('Error calling data server', err);
     });
   }

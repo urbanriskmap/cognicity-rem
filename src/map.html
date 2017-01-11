@@ -1,5 +1,7 @@
 <template>
+
   <require from="leaflet/leaflet.css"></require>
+  <require from="./styles.css"></require>
 
   <div class="map">
 
@@ -9,19 +11,37 @@
       ${error}
     </div>
 
+    <loading-indicator loading.bind="loading"></loading-indicator>
+
     <!-- Map -->
-    <!-- TODO: Set size dynamically -->
-    <div id="mapContainer" style="height:${mapHeight}px"></div>
+    <div id="mapContainer" style="height:${mapHeight}px;"></div>
+
+    <div class="btn-toolbar">
+      <div class="row">
+        <div class="col-md-2 text-left"></div>
+        <div class="col-md-8 text-center">
+          <div class="btn-group">
+            <button click.delegate="refreshFloodStates()" class="btn btn-primary">Refresh Flood States</button>
+            <button type="button" class="btn btn-danger">Clear Flood States</button>
+          </div>
+        </div>
+        <div class="col-md-2 text-right">
+          <div class="pull-right" style="visibility: ${refreshing ? 'visible' : 'hidden'}">
+            <img class="spinner" src="assets/icons/spinner.svg"/>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- Data Table -->
     <div id="tableContainer" style="overflow-y: scroll; height:${tableHeight}px;">
       <table class="table table-striped" aurelia-table="data.bind: floodAreas; display-data.bind: $floodAreas">
         <thead>
           <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>Reports</th>
-            <th>Local Areas</th>
+            <th class="col-md-1">ID</th>
+            <th class="col-md-2">Name</th>
+            <th class="col-md-1">Reports</th>
+            <th class="col-md-8">Local Areas</th>
           </tr>
         </thead>
         <tbody>
@@ -35,9 +55,7 @@
             <td>0</td>
             <td>
               <div class="collapse" id="localAreas${$index}">
-                <div class="well">
-                  TODO
-                </div>
+                  TODO: Local Area Details
               </div>
             </td>
           </tr>

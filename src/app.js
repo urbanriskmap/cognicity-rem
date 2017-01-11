@@ -7,7 +7,8 @@ import { Redirect } from 'aurelia-router';
 
 // TODO: Move into environment variables
 // TODO: Check credentials and log an error if incorrect
-const AUTH0_CLIENT_ID = 'REPLACE_WITH_ACTUAL_CLIENT_ID';
+// const AUTH0_CLIENT_ID = 'REPLACE_WITH_ACTUAL_CLIENT_ID';
+const AUTH0_CLIENT_ID = 'ApdfZvV1BrxXmwdg6Djrle4m2nav5ub9';
 const AUTH0_DOMAIN = 'petabencana.au.auth0.com';
 
 // Check credentials are supplied otherwise throw error
@@ -30,6 +31,7 @@ export class App {
       this.isAuthenticated = true;
     }
 
+    // TODO: Disable signup
     this.lock.on('authenticated', (authResult) => {
       self.lock.getProfile(authResult.idToken, (error, profile) => {
         if (error) {
@@ -41,6 +43,7 @@ export class App {
         localStorage.setItem('profile', JSON.stringify(profile));
         self.isAuthenticated = true;
         self.lock.hide();
+        // TODO: This is not working as expected
         return new Redirect('map');
       });
     });
@@ -66,6 +69,7 @@ export class App {
     localStorage.removeItem('profile');
     localStorage.removeItem('id_token');
     this.isAuthenticated = false;
+    // TODO: This is not working as expected
     return new Redirect('');
   }
 }

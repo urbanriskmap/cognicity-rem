@@ -3,12 +3,22 @@ import { HttpClient } from 'aurelia-fetch-client';
 
 import * as topojson from 'topojson-client';
 
-// TODO: Move to environment variable
+// Import environment variables
+import env from './environment';
+
 // URL for Cognicity Data API
-const DATA_URL = 'https://data.petabencana.id';
+const DATA_URL = env.dataUrl;
 
 // Authentication headers
 const auth = { headers: { 'Authorization': 'Bearer ' + localStorage.getItem('id_token') } };
+
+// Convert topjson to geojson
+const convertTopoToGeo = (data) => new Promise((resolve, reject) => {
+  if (!data || !data.result || data.result.type != 'Topology')
+    reject(new Error('Unexpected response from data server'));
+  let geojson = topojson.feature(data.result, data.result.objects.output);
+  resolve(geojson);
+});
 
 // Wrapper class for API calls to Cognicity Data API
 @inject(HttpClient)
@@ -22,40 +32,51 @@ export class API {
     this.http = http;
   }
 
-  // Get floods, return geojson
-  getFloods = (type) => {
-    this.isRequesting = true;
+  // Get floods as topojson, return geojson
+  getFloods = () => new Promise((resolve, reject) => {
     return this.http.fetch(`${DATA_URL}/floods?city=jbd`, auth)
     .then((response) => {
-      this.isRequesting = false;
-      if (response.status >= 400) throw new Error('Error calling data server');
-      else return response.json();
+      if (response.status >= 400) reject(new Error('Unexpected error updating floods'));
+      response.json().then((data) => resolve(convertTopoToGeo(data)));
     })
     .catch((err) => {
-      this.isRequesting = false;
-      throw new Error('Error calling data server', err);
+      reject(new Error('Error updating floods', err));
     });
-  }
+  });
+
+  // Get the latest flood states as json
+  getFloodStates = () => new Promise((resolve, reject) => {
+    return this.http.fetch(`${DATA_URL}/floods/states?city=jbd&minimum_state=1`, auth)
+    .then((response) => {
+      if (response.status >= 400) reject(new Error('Unexpected updating flood states'));
+      response.json().then((data) => resolve(data));
+    })
+    .catch((err) => {
+      reject(new Error('Error updating flood states', err));
+    });
+  });
 
   // Get infrastructure as topojson, return geojson
   getInfrastructure = (type) => new Promise((resolve, reject) => {
-    this.isRequesting = true;
     return this.http.fetch(`${DATA_URL}/infrastructure/${type}`, auth)
     .then((response) => {
-      this.isRequesting = false;
-      if (response.status >= 400) reject(new Error('Unexpected error calling data server'));
-      response.json().then((data) => {
-        //console.log(data);
-        if (!data || !data.result || data.result.type != 'Topology')
-          reject(new Error('Unexpected response from data server'));
-        let geojson = topojson.feature(data.result, data.result.objects.output);
-        //console.log(geojson);
-        resolve(geojson);
-      });
+      if (response.status >= 400) reject(new Error('Unexpected updating infrastructure'));
+      response.json().then((data) => resolve(convertTopoToGeo(data)));
     })
     .catch((err) => {
-      this.isRequesting = false;
-      reject(err);
+      reject(new Error('Error updating infrastructure', err));
+    });
+  });
+
+  // Get floods as topojson, return geojson
+  getReports = () => new Promise((resolve, reject) => {
+    return this.http.fetch(`${DATA_URL}/reports?city=jbd`, auth)
+    .then((response) => {
+      if (response.status >= 400) reject(new Error('Unexpected updating flood reports'));
+      response.json().then((data) => resolve(convertTopoToGeo(data)));
+    })
+    .catch((err) => {
+      reject(new Error('Error updating flood reports', err));
     });
   });
 

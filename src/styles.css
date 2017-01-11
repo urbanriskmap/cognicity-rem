@@ -1,9 +1,21 @@
-body { padding-top: 50px; }
-
 a:focus {
   outline: none;
 }
 
-.navbar-nav li.loader {
-    margin: 12px 24px 0 6px;
+.btn-toolbar {
+  margin: 10px 0px 10px 0px;
+}
+
+.btn-toolbar .btn-group {
+  float: initial;
+}
+
+.logo {
+  height: 50px;
+  width: 120px;
+}
+
+.spinner {
+  height: 30px;
+  width: 30px;
 }

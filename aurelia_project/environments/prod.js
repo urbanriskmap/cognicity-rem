@@ -1,7 +1,7 @@
 export default {
   debug: true,
   testing: true,
-  dataUrl: 'https://data.petabencana.id'
+  dataUrl: 'https://data.petabencana.id',
   mapConfig: {
     region: 'jbd',
     reports_refresh: 60000, // Reports will refresh every 60 seconds

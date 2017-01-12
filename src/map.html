@@ -18,14 +18,19 @@
 
     <div class="btn-toolbar">
       <div class="row">
-        <div class="col-md-2 text-left"></div>
-        <div class="col-md-8 text-center">
+        <div class="col-md-4 text-left">
+          <select value.bind="selectedDistrict" class="select-district">
+            <option model.bind="null">${!districts ? 'Loading' : 'Select a district'}</option>
+            <option repeat.for="district of districts" model.bind="district">${district.name}</option>
+          </select>
+        </div>
+        <div class="col-md-4 text-center">
           <div class="btn-group">
             <button click.delegate="refreshFloodStates()" class="btn btn-primary">Refresh Flood States</button>
-            <button type="button" class="btn btn-danger">Clear Flood States</button>
+            <button click.delegate="clearFloodStates()" class="btn btn-danger" if.bind="isEditor">Clear Flood States</button>
           </div>
         </div>
-        <div class="col-md-2 text-right">
+        <div class="col-md-4 text-right">
           <div class="pull-right" style="visibility: ${refreshing ? 'visible' : 'hidden'}">
             <img class="spinner" src="assets/icons/spinner.svg"/>
           </div>
@@ -35,41 +40,36 @@
 
     <!-- Data Table -->
     <div id="tableContainer" style="overflow-y: scroll; height:${tableHeight}px;">
-      <table class="table table-striped" aurelia-table="data.bind: floodAreas; display-data.bind: $floodAreas">
+      <table class="table table-striped" aurelia-table="data.bind: selectedDistrict.areas;
+        display-data.bind: $areas; api.bind: tableApi;">
         <thead>
           <tr>
             <th class="col-md-1">ID</th>
-            <th class="col-md-2">Name</th>
+            <th class="col-md-3">Name</th>
+            <th class="col-md-3">City</th>
+            <th class="col-md-2">Geom ID</th>
             <th class="col-md-1">Reports</th>
-            <th class="col-md-8">Local Areas</th>
+            <th class="col-md-2">State</th>
           </tr>
         </thead>
         <tbody>
-          <tr repeat.for="area of $floodAreas">
-            <td>
-              <a data-toggle="collapse" href="#localAreas${$index}" aria-expanded="false" aria-controls="localAreas${$index}">
-                ${$index}
-              </a>
-            </td>
-            <td>${area.name}</td>
+          <tr repeat.for="area of $areas" aut-select="row.bind: area; selected-class: info"
+            select.delegate="areaSelectedInTable($event)">
+            <td>${area.area_id}</td>
+            <td>${area.area_name}</td>
+            <td>${area.city_name}</td>
+            <td>${area.geom_id}</td>
             <td>0</td>
             <td>
-              <div class="collapse" id="localAreas${$index}">
-                  TODO: Local Area Details
-              </div>
+              <select value.bind="area.state" if.bind="isEditor && area === selectedArea">
+                <option repeat.for="state of floodStates" model.bind="state">${state.severity}</option>
+              </select>
+              <span if.bind="!isEditor || area !== selectedArea">${area.state | floodState}</span>
             </td>
           </tr>
         </tbody>
       </table>
     </div>
-
-    <!-- Pagination -->
-    <!--<div class="row">
-      <div class="col-md-12">
-        <aut-pagination current-page.bind="currentPage" page-size.bind="pageSize" total-items.bind="totalItems"
-        pagination-size.bind="5" boundary-links.bind="true"> </aut-pagination>
-      </div>
-    </div>-->
 
   </div>
 </template>

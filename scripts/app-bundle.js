@@ -136,21 +136,36 @@ define('app',['exports', 'aurelia-framework', 'aurelia-i18n', './api', './utils'
 
   if (!AUTH0_CLIENT_ID || !AUTH0_DOMAIN) throw new Error('Auth0 credentials are required');
 
-  var App = exports.App = (_dec = (0, _aureliaFramework.inject)(_api.API, _aureliaI18n.I18N), _dec(_class = function () {
-    function App(api, i18n) {
+  var App = exports.App = (_dec = (0, _aureliaFramework.inject)(_api.API, _aureliaI18n.I18N, _aureliaRouter.Router), _dec(_class = function () {
+    function App(api, i18n, router) {
+      var _this = this;
+
       _classCallCheck(this, App);
 
-      this.lock = new Auth0Lock(AUTH0_CLIENT_ID, AUTH0_DOMAIN);
+      this.lock = new Auth0Lock(AUTH0_CLIENT_ID, AUTH0_DOMAIN, {
+        allowSignUp: false
+      });
       this.isAuthenticated = false;
+      this.isEditor = false;
+      this.username = null;
 
       this.api = api;
       this.i18n = i18n;
+      this.router = router;
       var self = this;
 
       if ((0, _utils.tokenIsExpired)()) {
         this.isAuthenticated = false;
+        this.isEditor = false;
+        this.username = null;
       } else {
         this.isAuthenticated = true;
+        var profile = localStorage.getItem('profile');
+        if (profile) {
+          profile = JSON.parse(profile);
+          this.isEditor = profile.app_metadata && profile.app_metadata.role === 'editor';
+          this.username = profile.email;
+        }
       }
 
       this.lock.on('authenticated', function (authResult) {
@@ -158,13 +173,14 @@ define('app',['exports', 'aurelia-framework', 'aurelia-i18n', './api', './utils'
           if (error) {
             return;
           }
-
           localStorage.setItem('id_token', authResult.idToken);
           localStorage.setItem('profile', JSON.stringify(profile));
+          self.isEditor = profile.app_metadata && profile.app_metadata.role === 'editor';
+          self.username = profile.email;
           self.isAuthenticated = true;
           self.lock.hide();
 
-          return new _aureliaRouter.Redirect('map');
+          _this.router.navigate('map');
         });
       });
     }
@@ -174,7 +190,6 @@ define('app',['exports', 'aurelia-framework', 'aurelia-i18n', './api', './utils'
       config.options.pushState = true;
       config.options.root = '/';
       config.map([{ route: '', moduleId: 'home', name: 'home', title: 'Home' }, { route: 'map', moduleId: 'map', name: 'map', title: 'Map' }]);
-
       this.router = router;
     };
 
@@ -187,7 +202,7 @@ define('app',['exports', 'aurelia-framework', 'aurelia-i18n', './api', './utils'
       localStorage.removeItem('id_token');
       this.isAuthenticated = false;
 
-      return new _aureliaRouter.Redirect('');
+      this.router.navigate('');
     };
 
     return App;
@@ -203,6 +218,27 @@ define('environment',['exports'], function (exports) {
     debug: true,
     testing: true,
     dataUrl: 'https://data-dev.petabencana.id',
+    floodStates: [{
+      level: null,
+      severity: 'Clear',
+      levelDescription: 'NO FLOODING'
+    }, {
+      level: 1,
+      severity: 'Unknown',
+      levelDescription: 'AN UNKNOWN LEVEL OF FLOODING - USE CAUTION -'
+    }, {
+      level: 2,
+      severity: 'Minor',
+      levelDescription: 'FLOODING OF BETWEEN 10 and 70 CENTIMETERS'
+    }, {
+      level: 3,
+      severity: 'Moderate',
+      levelDescription: 'FLOODING OF BETWEEN 71 and 150 CENTIMETERS'
+    }, {
+      level: 4,
+      severity: 'Severe',
+      levelDescription: 'FLOODING OF OVER 150 CENTIMETERS'
+    }],
     mapConfig: {
       region: 'jbd',
       reports_refresh: 60000,
@@ -311,7 +347,7 @@ define('main',['exports', './environment', 'i18next-xhr-backend'], function (exp
     });
   }
 });
-define('map',['exports', 'aurelia-framework', 'aurelia-router', 'aurelia-i18n', 'leaflet', 'element-resize-detector', './api', './utils', './environment'], function (exports, _aureliaFramework, _aureliaRouter, _aureliaI18n, _leaflet, _elementResizeDetector, _api, _utils, _environment) {
+define('map',['exports', 'aurelia-framework', 'aurelia-router', 'aurelia-i18n', 'leaflet', './api', './utils', './environment'], function (exports, _aureliaFramework, _aureliaRouter, _aureliaI18n, _leaflet, _api, _utils, _environment) {
   'use strict';
 
   Object.defineProperty(exports, "__esModule", {
@@ -320,8 +356,6 @@ define('map',['exports', 'aurelia-framework', 'aurelia-router', 'aurelia-i18n', 
   exports.Map = undefined;
 
   var L = _interopRequireWildcard(_leaflet);
-
-  var erd = _interopRequireWildcard(_elementResizeDetector);
 
   var _environment2 = _interopRequireDefault(_environment);
 
@@ -362,28 +396,90 @@ define('map',['exports', 'aurelia-framework', 'aurelia-router', 'aurelia-i18n', 
     return target;
   };
 
+  function _initDefineProp(target, property, descriptor, context) {
+    if (!descriptor) return;
+    Object.defineProperty(target, property, {
+      enumerable: descriptor.enumerable,
+      configurable: descriptor.configurable,
+      writable: descriptor.writable,
+      value: descriptor.initializer ? descriptor.initializer.call(context) : void 0
+    });
+  }
+
   function _classCallCheck(instance, Constructor) {
     if (!(instance instanceof Constructor)) {
       throw new TypeError("Cannot call a class as a function");
     }
   }
 
-  var _dec, _class;
+  function _applyDecoratedDescriptor(target, property, decorators, descriptor, context) {
+    var desc = {};
+    Object['ke' + 'ys'](descriptor).forEach(function (key) {
+      desc[key] = descriptor[key];
+    });
+    desc.enumerable = !!desc.enumerable;
+    desc.configurable = !!desc.configurable;
+
+    if ('value' in desc || desc.initializer) {
+      desc.writable = true;
+    }
+
+    desc = decorators.slice().reverse().reduce(function (desc, decorator) {
+      return decorator(target, property, desc) || desc;
+    }, desc);
+
+    if (context && desc.initializer !== void 0) {
+      desc.value = desc.initializer ? desc.initializer.call(context) : void 0;
+      desc.initializer = undefined;
+    }
+
+    if (desc.initializer === void 0) {
+      Object['define' + 'Property'](target, property, desc);
+      desc = null;
+    }
+
+    return desc;
+  }
+
+  function _initializerWarningHelper(descriptor, context) {
+    throw new Error('Decorating class property failed. Please ensure that transform-class-properties is enabled.');
+  }
+
+  var _dec, _dec2, _class, _desc, _value, _class2, _descriptor;
 
   var config = _environment2.default.mapConfig;
 
-  var Map = exports.Map = (_dec = (0, _aureliaFramework.inject)(_api.API, _aureliaI18n.I18N), _dec(_class = function () {
+  var highlightFeature = function highlightFeature(e) {
+    var layer = e.target;
+    layer.setStyle({
+      weight: 5,
+      color: '#666',
+      dashArray: '',
+      fillOpacity: 0.7
+    });
+    if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+      layer.bringToFront();
+    }
+  };
+
+  var Map = exports.Map = (_dec = (0, _aureliaFramework.inject)(_api.API, _aureliaI18n.I18N), _dec2 = (0, _aureliaFramework.bindable)({ defaultBindingMode: _aureliaFramework.bindingMode.twoWay }), _dec(_class = (_class2 = function () {
     function Map(api, i18n) {
       _classCallCheck(this, Map);
+
+      _initDefineProp(this, 'selectedDistrict', _descriptor, this);
 
       this.api = api;
       this.i18n = i18n;
       this.pageSize = 5;
       this.loading = true;
       this.refreshing = true;
+      this.selectedDistrict = null;
+      this.selectedArea = null;
+      this.floodStates = _environment2.default.floodStates;
 
-      this.mapHeight = window.innerHeight * 0.65 - 50;
-      this.tableHeight = window.innerHeight * 0.35 - 50;
+      this.mapHeight = window.innerHeight * 0.66 - 100;
+
+      this.tableHeight = this.mapHeight * 0.5;
     }
 
     Map.prototype.attached = function attached() {
@@ -441,13 +537,35 @@ define('map',['exports', 'aurelia-framework', 'aurelia-router', 'aurelia-i18n', 
               default:
                 return style;
             }
+          },
+          onEachFeature: function onEachFeature(feature, layer) {
+            layer._leaflet_id = feature.area_id;
+            layer.on({
+              mouseover: highlightFeature,
+              mouseout: function mouseout(e) {
+                _this.floodLayer.resetStyle(e.target);
+              },
+              click: function click(e) {
+                _this.map.fitBounds(e.target.getBounds());
+
+                _this.selectedDistrict = _this.districts.find(function (element) {
+                  return element.name === e.target.feature.properties.parent_name;
+                });
+
+                _this.selectedArea = _this.selectedDistrict.areas.find(function (element) {
+                  return element.area_id === e.target.feature.properties.area_id;
+                });
+                _this.selectedArea.$isSelected = true;
+                _this.tableApi.revealItem(_this.selectedArea);
+              }
+            });
           }
         });
         _this.floodLayer.addTo(_this.map);
 
         _this.map.fitBounds(_this.floodLayer.getBounds());
 
-        _this.populateFloodAreas(_this.floods);
+        _this.populateDistricts(_this.floods);
 
         _this.refreshing = false;
       }).catch(function (err) {
@@ -529,10 +647,9 @@ define('map',['exports', 'aurelia-framework', 'aurelia-router', 'aurelia-i18n', 
       return true;
     };
 
-    Map.prototype.populateFloodAreas = function populateFloodAreas(floods) {
-      var self = this;
+    Map.prototype.populateDistricts = function populateDistricts(floods) {
       var floodsObj = {};
-      for (var _iterator3 = self.floods.features, _isArray3 = Array.isArray(_iterator3), _i3 = 0, _iterator3 = _isArray3 ? _iterator3 : _iterator3[Symbol.iterator]();;) {
+      for (var _iterator3 = this.floods.features, _isArray3 = Array.isArray(_iterator3), _i3 = 0, _iterator3 = _isArray3 ? _iterator3 : _iterator3[Symbol.iterator]();;) {
         var _ref3;
 
         if (_isArray3) {
@@ -556,7 +673,7 @@ define('map',['exports', 'aurelia-framework', 'aurelia-router', 'aurelia-i18n', 
       var parents = Object.keys(floodsObj);
       parents.sort();
 
-      self.floodAreas = [];
+      this.districts = [];
       for (var _iterator4 = parents, _isArray4 = Array.isArray(_iterator4), _i4 = 0, _iterator4 = _isArray4 ? _iterator4 : _iterator4[Symbol.iterator]();;) {
         var _ref4;
 
@@ -571,9 +688,9 @@ define('map',['exports', 'aurelia-framework', 'aurelia-router', 'aurelia-i18n', 
 
         var parent = _ref4;
 
-        self.floodAreas.push({
+        this.districts.push({
           name: parent,
-          reports: floodsObj[parent].sort(function (a, b) {
+          areas: floodsObj[parent].sort(function (a, b) {
             if (a.area_name < b.area_name) return -1;
             if (a.area_name > b.area_name) return 1;
             return 0;
@@ -606,8 +723,15 @@ define('map',['exports', 'aurelia-framework', 'aurelia-router', 'aurelia-i18n', 
 
     Map.prototype.clearStates = function clearStates() {};
 
+    Map.prototype.areaSelectedInTable = function areaSelectedInTable($event) {
+      this.selectedArea = $event.detail.row;
+    };
+
     return Map;
-  }()) || _class);
+  }(), (_descriptor = _applyDecoratedDescriptor(_class2.prototype, 'selectedDistrict', [_dec2], {
+    enumerable: true,
+    initializer: null
+  })), _class2)) || _class);
 });
 define('utils',['exports', 'jwt-decode'], function (exports, jwtDecode) {
   'use strict';
@@ -636,34 +760,23 @@ define('resources/index',['exports'], function (exports) {
   });
   exports.configure = configure;
   function configure(config) {
-    config.globalResources(['./elements/loading-indicator']);
+    config.globalResources(['./elements/loading-indicator', './value-converters/flood-state']);
   }
 });
-define('resources/elements/loading-indicator',['exports', 'nprogress', 'aurelia-framework'], function (exports, _nprogress, _aureliaFramework) {
+define('resources/value-converters/flood-state',['exports', '../../map', '../../environment'], function (exports, _map, _environment) {
   'use strict';
 
   Object.defineProperty(exports, "__esModule", {
     value: true
   });
-  exports.LoadingIndicator = undefined;
+  exports.FloodStateValueConverter = undefined;
 
-  var nprogress = _interopRequireWildcard(_nprogress);
+  var _environment2 = _interopRequireDefault(_environment);
 
-  function _interopRequireWildcard(obj) {
-    if (obj && obj.__esModule) {
-      return obj;
-    } else {
-      var newObj = {};
-
-      if (obj != null) {
-        for (var key in obj) {
-          if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key];
-        }
-      }
-
-      newObj.default = obj;
-      return newObj;
-    }
+  function _interopRequireDefault(obj) {
+    return obj && obj.__esModule ? obj : {
+      default: obj
+    };
   }
 
   function _classCallCheck(instance, Constructor) {
@@ -672,23 +785,17 @@ define('resources/elements/loading-indicator',['exports', 'nprogress', 'aurelia-
     }
   }
 
-  nprogress.configure({ showSpinner: false });
-
-  var LoadingIndicator = exports.LoadingIndicator = (0, _aureliaFramework.decorators)((0, _aureliaFramework.noView)(['nprogress/nprogress.css']), (0, _aureliaFramework.bindable)({ name: 'loading', defaultValue: false })).on(function () {
-    function _class() {
-      _classCallCheck(this, _class);
+  var FloodStateValueConverter = exports.FloodStateValueConverter = function () {
+    function FloodStateValueConverter() {
+      _classCallCheck(this, FloodStateValueConverter);
     }
 
-    _class.prototype.loadingChanged = function loadingChanged(newValue) {
-      if (newValue) {
-        nprogress.start();
-      } else {
-        nprogress.done();
-      }
+    FloodStateValueConverter.prototype.toView = function toView(value) {
+      return value ? _environment2.default.floodStates[value] : '-';
     };
 
-    return _class;
-  }());
+    return FloodStateValueConverter;
+  }();
 });
 define('aurelia-templating-resources/compose',['exports', 'aurelia-dependency-injection', 'aurelia-task-queue', 'aurelia-templating', 'aurelia-pal'], function (exports, _aureliaDependencyInjection, _aureliaTaskQueue, _aureliaTemplating, _aureliaPal) {
   'use strict';
@@ -4305,8 +4412,60 @@ module.exports = typeof window !== 'undefined' && window.atob && window.atob.bin
 
 });
 
-define('text!app.html', ['module'], function(module) { module.exports = "<template>\n\n  <require from=\"bootstrap/css/bootstrap.css\"></require>\n  <require from=\"./styles.css\"></require>\n\n  <nav class=\"navbar navbar-default navbar-static-top\" role=\"navigation\">\n    <div class=\"container-fluid\">\n      <div class=\"navbar-header\">\n        <a route-href=\"route: home\">\n          <img class=\"logo\" src=\"assets/graphics/Peta_logo.svg\"/>\n        </a>\n      </div>\n      <div class=\"navbar-collapse collapse\">\n        <ul if.bind=\"isAuthenticated\" class=\"nav navbar-nav navbar-right\">\n          <li><a route-href=\"route: map\"><span t=\"map\" /></a></li>\n          <li><a href=\"#\" click.delegate=\"logout()\"><span t=\"logout\" /></a></li>\n        </ul>\n        <ul if.bind=\"!isAuthenticated\" class=\"nav navbar-nav navbar-right\">\n          <li><a href=\"#\" click.delegate=\"login()\"><span t=\"login\" /></a></li>\n        </ul>\n      </div>\n    </div>\n  </nav>\n\n  <div class=\"container-fluid\">\n    <div class=\"row\">\n      <router-view class=\"col-md-12\"></router-view>\n    </div>\n  </div>\n\n</template>\n"; });
-define('text!styles.css', ['module'], function(module) { module.exports = "a:focus {\n  outline: none;\n}\n\n.btn-toolbar {\n  margin: 10px 0px 10px 0px;\n}\n\n.btn-toolbar .btn-group {\n  float: initial;\n}\n\n.logo {\n  height: 50px;\n  width: 120px;\n}\n\n.spinner {\n  height: 30px;\n  width: 30px;\n}\n"; });
+define('resources/elements/loading-indicator',['exports', 'nprogress', 'aurelia-framework'], function (exports, _nprogress, _aureliaFramework) {
+  'use strict';
+
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
+  exports.LoadingIndicator = undefined;
+
+  var nprogress = _interopRequireWildcard(_nprogress);
+
+  function _interopRequireWildcard(obj) {
+    if (obj && obj.__esModule) {
+      return obj;
+    } else {
+      var newObj = {};
+
+      if (obj != null) {
+        for (var key in obj) {
+          if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key];
+        }
+      }
+
+      newObj.default = obj;
+      return newObj;
+    }
+  }
+
+  function _classCallCheck(instance, Constructor) {
+    if (!(instance instanceof Constructor)) {
+      throw new TypeError("Cannot call a class as a function");
+    }
+  }
+
+  nprogress.configure({ showSpinner: false });
+
+  var LoadingIndicator = exports.LoadingIndicator = (0, _aureliaFramework.decorators)((0, _aureliaFramework.noView)(['nprogress/nprogress.css']), (0, _aureliaFramework.bindable)({ name: 'loading', defaultValue: false })).on(function () {
+    function _class() {
+      _classCallCheck(this, _class);
+    }
+
+    _class.prototype.loadingChanged = function loadingChanged(newValue) {
+      if (newValue) {
+        nprogress.start();
+      } else {
+        nprogress.done();
+      }
+    };
+
+    return _class;
+  }());
+});
+define('text!app.html', ['module'], function(module) { module.exports = "<template>\n\n  <require from=\"bootstrap/css/bootstrap.css\"></require>\n  <require from=\"./styles.css\"></require>\n\n  <nav class=\"navbar navbar-default navbar-static-top\" role=\"navigation\">\n    <div class=\"container-fluid\">\n      <div class=\"navbar-header\">\n        <a route-href=\"route: home\">\n          <img class=\"logo\" src=\"assets/graphics/Peta_logo.svg\"/>\n        </a>\n      </div>\n      <div class=\"navbar-collapse collapse\">\n        <ul if.bind=\"isAuthenticated\" class=\"nav navbar-nav navbar-right\">\n          <li><a>User: ${username}</a></li>\n          <li><a route-href=\"route: map\">Map</a></li>\n          <li><a href=\"#\" click.delegate=\"logout()\"><span t=\"logout\" /></a></li>\n        </ul>\n        <ul if.bind=\"!isAuthenticated\" class=\"nav navbar-nav navbar-right\">\n          <li><a href=\"#\" click.delegate=\"login()\"><span t=\"login\" /></a></li>\n        </ul>\n      </div>\n    </div>\n  </nav>\n\n  <div class=\"container-fluid\">\n    <div class=\"row\">\n      <router-view class=\"col-md-12\"></router-view>\n    </div>\n  </div>\n\n</template>\n"; });
+define('text!styles.css', ['module'], function(module) { module.exports = "a:focus {\n  outline: none;\n}\n\n.btn-toolbar {\n  margin: 10px 0px 10px 0px;\n}\n\n.btn-toolbar .btn-group {\n  float: initial;\n}\n\n.logo {\n  height: 50px;\n  width: 120px;\n}\n\n.select-district {\n  width: 200px;\n  font-size: 16px;\n  margin-top: 8px;\n}\n\n.spinner {\n  height: 30px;\n  width: 30px;\n}\n"; });
 define('text!home.html', ['module'], function(module) { module.exports = "<template>\n  <div class=\"no-selection text-center\">\n    <h3>Please login to continue to the map</h3>\n  </div>\n</template>\n"; });
-define('text!map.html', ['module'], function(module) { module.exports = "<template>\n\n  <require from=\"leaflet/leaflet.css\"></require>\n  <require from=\"./styles.css\"></require>\n\n  <div class=\"map\">\n\n    <!-- Error Message Box -->\n    <div if.bind=\"error\" class=\"alert alert-danger\" role=\"alert\">\n      <span class=\"sr-only\">Error:</span>\n      ${error}\n    </div>\n\n    <loading-indicator loading.bind=\"loading\"></loading-indicator>\n\n    <!-- Map -->\n    <div id=\"mapContainer\" style=\"height:${mapHeight}px;\"></div>\n\n    <div class=\"btn-toolbar\">\n      <div class=\"row\">\n        <div class=\"col-md-2 text-left\"></div>\n        <div class=\"col-md-8 text-center\">\n          <div class=\"btn-group\">\n            <button click.delegate=\"refreshFloodStates()\" class=\"btn btn-primary\">Refresh Flood States</button>\n            <button type=\"button\" class=\"btn btn-danger\">Clear Flood States</button>\n          </div>\n        </div>\n        <div class=\"col-md-2 text-right\">\n          <div class=\"pull-right\" style=\"visibility: ${refreshing ? 'visible' : 'hidden'}\">\n            <img class=\"spinner\" src=\"assets/icons/spinner.svg\"/>\n          </div>\n        </div>\n      </div>\n    </div>\n\n    <!-- Data Table -->\n    <div id=\"tableContainer\" style=\"overflow-y: scroll; height:${tableHeight}px;\">\n      <table class=\"table table-striped\" aurelia-table=\"data.bind: floodAreas; display-data.bind: $floodAreas\">\n        <thead>\n          <tr>\n            <th class=\"col-md-1\">ID</th>\n            <th class=\"col-md-2\">Name</th>\n            <th class=\"col-md-1\">Reports</th>\n            <th class=\"col-md-8\">Local Areas</th>\n          </tr>\n        </thead>\n        <tbody>\n          <tr repeat.for=\"area of $floodAreas\">\n            <td>\n              <a data-toggle=\"collapse\" href=\"#localAreas${$index}\" aria-expanded=\"false\" aria-controls=\"localAreas${$index}\">\n                ${$index}\n              </a>\n            </td>\n            <td>${area.name}</td>\n            <td>0</td>\n            <td>\n              <div class=\"collapse\" id=\"localAreas${$index}\">\n                  TODO: Local Area Details\n              </div>\n            </td>\n          </tr>\n        </tbody>\n      </table>\n    </div>\n\n    <!-- Pagination -->\n    <!--<div class=\"row\">\n      <div class=\"col-md-12\">\n        <aut-pagination current-page.bind=\"currentPage\" page-size.bind=\"pageSize\" total-items.bind=\"totalItems\"\n        pagination-size.bind=\"5\" boundary-links.bind=\"true\"> </aut-pagination>\n      </div>\n    </div>-->\n\n  </div>\n</template>\n"; });
+define('text!map.html', ['module'], function(module) { module.exports = "<template>\n\n  <require from=\"leaflet/leaflet.css\"></require>\n  <require from=\"./styles.css\"></require>\n\n  <div class=\"map\">\n\n    <!-- Error Message Box -->\n    <div if.bind=\"error\" class=\"alert alert-danger\" role=\"alert\">\n      <span class=\"sr-only\">Error:</span>\n      ${error}\n    </div>\n\n    <loading-indicator loading.bind=\"loading\"></loading-indicator>\n\n    <!-- Map -->\n    <div id=\"mapContainer\" style=\"height:${mapHeight}px;\"></div>\n\n    <div class=\"btn-toolbar\">\n      <div class=\"row\">\n        <div class=\"col-md-4 text-left\">\n          <select value.bind=\"selectedDistrict\" class=\"select-district\">\n            <option model.bind=\"null\">${!districts ? 'Loading' : 'Select a district'}</option>\n            <option repeat.for=\"district of districts\" model.bind=\"district\">${district.name}</option>\n          </select>\n        </div>\n        <div class=\"col-md-4 text-center\">\n          <div class=\"btn-group\">\n            <button click.delegate=\"refreshFloodStates()\" class=\"btn btn-primary\">Refresh Flood States</button>\n            <button click.delegate=\"clearFloodStates()\" class=\"btn btn-danger\" if.bind=\"isEditor\">Clear Flood States</button>\n          </div>\n        </div>\n        <div class=\"col-md-4 text-right\">\n          <div class=\"pull-right\" style=\"visibility: ${refreshing ? 'visible' : 'hidden'}\">\n            <img class=\"spinner\" src=\"assets/icons/spinner.svg\"/>\n          </div>\n        </div>\n      </div>\n    </div>\n\n    <!-- Data Table -->\n    <div id=\"tableContainer\" style=\"overflow-y: scroll; height:${tableHeight}px;\">\n      <table class=\"table table-striped\" aurelia-table=\"data.bind: selectedDistrict.areas;\n        display-data.bind: $areas; api.bind: tableApi;\">\n        <thead>\n          <tr>\n            <th class=\"col-md-1\">ID</th>\n            <th class=\"col-md-3\">Name</th>\n            <th class=\"col-md-3\">City</th>\n            <th class=\"col-md-2\">Geom ID</th>\n            <th class=\"col-md-1\">Reports</th>\n            <th class=\"col-md-2\">State</th>\n          </tr>\n        </thead>\n        <tbody>\n          <tr repeat.for=\"area of $areas\" aut-select=\"row.bind: area; selected-class: info\"\n            select.delegate=\"areaSelectedInTable($event)\">\n            <td>${area.area_id}</td>\n            <td>${area.area_name}</td>\n            <td>${area.city_name}</td>\n            <td>${area.geom_id}</td>\n            <td>0</td>\n            <td>\n              <select value.bind=\"area.state\" if.bind=\"isEditor && area === selectedArea\">\n                <option repeat.for=\"state of floodStates\" model.bind=\"state\">${state.severity}</option>\n              </select>\n              <span if.bind=\"!isEditor || area !== selectedArea\">${area.state | floodState}</span>\n            </td>\n          </tr>\n        </tbody>\n      </table>\n    </div>\n\n  </div>\n</template>\n"; });
+define('text!resources/elements/select-picker.html', ['module'], function(module) { module.exports = "<template>\n  <select class=\"selectpicker\">\n    <option repeat.for=\"p of selectableValues\">${p}</option>\n  </select>\n</template>\n"; });
 //# sourceMappingURL=app-bundle.js.map

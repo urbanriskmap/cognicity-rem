@@ -1,9 +1,8 @@
-import { inject } from 'aurelia-framework';
+import { bindable, bindingMode, inject } from 'aurelia-framework';
 import { Redirect } from 'aurelia-router';
 import { I18N } from 'aurelia-i18n';
 
 import * as L from 'leaflet';
-import * as erd from 'element-resize-detector';
 
 import { API } from './api';
 import { tokenIsExpired } from './utils';
@@ -14,8 +13,24 @@ import env from './environment';
 // Read map config from environment
 const config = env.mapConfig;
 
+// Highlight a specific feature
+const highlightFeature = (e) => {
+  let layer = e.target;
+  layer.setStyle({
+    weight: 5,
+    color: '#666',
+    dashArray: '',
+    fillOpacity: 0.7
+  });
+  if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+    layer.bringToFront();
+  }
+}
+
 @inject(API, I18N)
 export class Map {
+
+  @bindable({ defaultBindingMode: bindingMode.twoWay }) selectedDistrict;
 
   constructor(api, i18n) {
     this.api = api;
@@ -23,9 +38,15 @@ export class Map {
     this.pageSize = 5;
     this.loading = true;
     this.refreshing = true;
+    this.selectedDistrict = null;
+    this.selectedArea = null;
+    this.floodStates = env.floodStates;
+
     // TODO: Improve this, it is a little hacky and does not take into account user reszing their browser
-    this.mapHeight = ( window.innerHeight * 0.65 ) - 50;
-    this.tableHeight = ( window.innerHeight * 0.35 ) - 50;
+    // Map height should be a 1/3 of usable screen space (less header)
+    this.mapHeight = ( window.innerHeight * 0.66 ) - 100;
+    // Table height should be half the map height
+    this.tableHeight = this.mapHeight * 0.5;
   }
 
   attached() {
@@ -70,6 +91,28 @@ export class Map {
             case 4: return { ...style, color: '#b30000' };
             default: return style;
           }
+        },
+        onEachFeature: (feature, layer) => {
+          layer._leaflet_id = feature.area_id;
+          layer.on({
+            mouseover: highlightFeature,
+            mouseout: (e) => {
+              // Reset highlights on the flood layer
+              this.floodLayer.resetStyle(e.target);
+            },
+            click: (e) => {
+              // Zoom to a given feature
+              this.map.fitBounds(e.target.getBounds());
+              // Update the selectedDistrict with the parent district of the feature
+              this.selectedDistrict = this.districts.find((element) =>
+                element.name === e.target.feature.properties.parent_name);
+              // Select the area in the table
+              this.selectedArea = this.selectedDistrict.areas.find((element) =>
+                element.area_id === e.target.feature.properties.area_id)
+              this.selectedArea.$isSelected = true;
+              this.tableApi.revealItem(this.selectedArea);
+            }
+          });
         }
       });
       this.floodLayer.addTo(this.map);
@@ -78,7 +121,7 @@ export class Map {
       this.map.fitBounds(this.floodLayer.getBounds())
 
       // Populate floods table
-      this.populateFloodAreas(this.floods);
+      this.populateDistricts(this.floods);
 
       // Updated refreshing status
       this.refreshing = false;
@@ -143,11 +186,10 @@ export class Map {
     return true;
   }
 
-  // Populate the flood areas, grouping areas by parent
-  populateFloodAreas(floods) {
-    let self = this;
+  // Populate the districts and their associated flood areas
+  populateDistricts(floods) {
     let floodsObj = {};
-    for (let flood of self.floods.features) {
+    for (let flood of this.floods.features) {
       if (floodsObj[flood.properties.parent_name]) {
         // If the parent exists then add another flood record to it
         floodsObj[flood.properties.parent_name].push(flood.properties);
@@ -162,12 +204,11 @@ export class Map {
     parents.sort();
 
     // Now assign all parents and their corresponding floods to an array
-    self.floodAreas = [];
+    this.districts = [];
     for (let parent of parents) {
-      self.floodAreas.push({
-        // Sort by area name
+      this.districts.push({
         name: parent,
-        reports: floodsObj[parent].sort((a,b) => {
+        areas: floodsObj[parent].sort((a,b) => {
           if (a.area_name < b.area_name)
           return -1;
           if (a.area_name > b.area_name)
@@ -177,6 +218,7 @@ export class Map {
       });
     }
   }
+
 
   // Refresh the current flood states
   refreshFloodStates() {
@@ -197,7 +239,7 @@ export class Map {
     });
   }
 
-  // TODO: Only a user with role=editor can update state
+  // Set the state with the new state value
   setState() {
 
   }
@@ -206,5 +248,13 @@ export class Map {
   // TODO: Iterate through all non zero states and clear the state with DELETE
   clearStates() {
 
+  }
+
+  // When an area has been selected in the table, select the area on the map
+  areaSelectedInTable($event){
+    this.selectedArea = $event.detail.row;
+    // FIXME: This interaction is not working as expected
+    // let layer = this.floodLayer.getLayer($event.detail.row.area_id);
+    // if (layer) layer.fireEvent('click');
   }
 }

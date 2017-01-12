@@ -2,6 +2,33 @@ export default {
   debug: true,
   testing: true,
   dataUrl: 'https://data.petabencana.id',
+  floodStates: [
+    {
+      level: null,
+      severity: 'Clear',
+      levelDescription: 'NO FLOODING'
+    },
+    {
+      level: 1,
+      severity: 'Unknown',
+      levelDescription: 'AN UNKNOWN LEVEL OF FLOODING - USE CAUTION -'
+    },
+    {
+      level: 2,
+      severity: 'Minor',
+      levelDescription: 'FLOODING OF BETWEEN 10 and 70 CENTIMETERS'
+    },
+    {
+      level: 3,
+      severity: 'Moderate',
+      levelDescription: 'FLOODING OF BETWEEN 71 and 150 CENTIMETERS'
+    },
+    {
+      level: 4,
+      severity: 'Severe',
+      levelDescription: 'FLOODING OF OVER 150 CENTIMETERS'
+    }
+  ],
   mapConfig: {
     region: 'jbd',
     reports_refresh: 60000, // Reports will refresh every 60 seconds

@@ -15,6 +15,12 @@ a:focus {
   width: 120px;
 }
 
+.select-district {
+  width: 200px;
+  font-size: 16px;
+  margin-top: 8px;
+}
+
 .spinner {
   height: 30px;
   width: 30px;

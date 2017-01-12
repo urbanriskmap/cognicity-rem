@@ -80,4 +80,20 @@ export class API {
     });
   });
 
+  // Update the value of the flood state
+  // TOOD: To complete
+  updateFloodState = (localAreaId, state, username) => new Promise((resolve, reject) => {
+    return this.http.fetch(`${DATA_URL}/floods/${localAreaId}`, ...auth, {
+      method: 'put',
+      body: json({ state, username })
+    })
+    .then((response) => {
+      if (response.status >= 400) reject(new Error('Unexpected updating flood state'));
+      response.json().then((data) => resolve(data));
+    })
+    .catch((err) => {
+      reject(new Error('Error updating flood state', err));
+    });
+  });
+
 }

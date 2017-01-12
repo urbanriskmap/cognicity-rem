@@ -112,6 +112,24 @@ define('api',['exports', 'aurelia-framework', 'aurelia-fetch-client', 'topojson-
       });
     };
 
+    this.updateFloodState = function (localAreaId, state, username) {
+      return new Promise(function (resolve, reject) {
+        var _http;
+
+        return (_http = _this.http).fetch.apply(_http, [DATA_URL + '/floods/' + localAreaId].concat(auth, [{
+          method: 'put',
+          body: json({ state: state, username: username })
+        }])).then(function (response) {
+          if (response.status >= 400) reject(new Error('Unexpected updating flood state'));
+          response.json().then(function (data) {
+            return resolve(data);
+          });
+        }).catch(function (err) {
+          reject(new Error('Error updating flood state', err));
+        });
+      });
+    };
+
     this.http = http;
   }) || _class);
 });

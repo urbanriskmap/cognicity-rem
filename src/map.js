@@ -60,6 +60,18 @@ export class Map {
 
     L.control.scale({position:'bottomright', metric:true, imperial:false}).addTo(this.map);
 
+    var mapKey = L.Control.extend({
+      options: {
+        position:'bottomright'
+      },
+      onAdd: function(map) {
+        var container = L.DomUtil.create('div', 'info legend');
+	       container.innerHTML += '<div id="heightsLegend"><div class="sublegend"><div style="font-weight:bold">Tinggi Banjir</div><div><i class="color" style="background:#CC2A41;"></i><span>&nbsp;&gt; 150 cm</span></div><div><i class="color" style="background:#FF8300"></i><span>&nbsp;71 cm &ndash; 150 cm </span></div><div><i class="color" style="background:#FFFF00"></i><span>&nbsp;10 cm &ndash; 70 cm</span></div><i class="color" style="background:#A0A9F7"></i><span>&nbsp;RWs</span></div></div>';        return container;
+      }
+    });
+
+    this.map.addControl(new mapKey);
+
     // Add basemaps
     let basemapLayers = {};
     for (let basemap of config.basemaps) {

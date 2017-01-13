@@ -91,8 +91,7 @@ export class Map {
             case 2: return { ...style, fillColor:"#FF8300",weight:1,color:"#FF8300", opacity:0.8,fillOpacity: 0.8};
             case 3: return { ...style, fillColor:"#FFFF00",weight:1,color:"#FFFF00", opacity:0.8,fillOpacity: 0.8};
             case 4: return { ...style, fillColor:"#CC2A41",weight:1,color:"#CC2A41", opacity:0.8,fillOpacity: 0.8};
-
-            default: return {...style, color:"rgba(0,0,0,0)",weight:0,fillOpacity:0};
+            default: return {...style, color:"#444",weight:0.2,opacity:1,fillOpacity:0};
           }
         },
         onEachFeature: (feature, layer) => {

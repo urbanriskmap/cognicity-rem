@@ -581,9 +581,8 @@ define('map',['exports', 'aurelia-framework', 'aurelia-router', 'aurelia-i18n', 
                 return _extends({}, style, { fillColor: "#FFFF00", weight: 1, color: "#FFFF00", opacity: 0.8, fillOpacity: 0.8 });
               case 4:
                 return _extends({}, style, { fillColor: "#CC2A41", weight: 1, color: "#CC2A41", opacity: 0.8, fillOpacity: 0.8 });
-
               default:
-                return _extends({}, style, { color: "rgba(0,0,0,0)", weight: 0, fillOpacity: 0 });
+                return _extends({}, style, { color: "#444", weight: 0.2, opacity: 1, fillOpacity: 0 });
             }
           },
           onEachFeature: function onEachFeature(feature, layer) {

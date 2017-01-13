@@ -87,11 +87,12 @@ export class Map {
             fillOpacity: 0.1
           };
           switch (feature.properties.state) {
-            case 1: return { ...style, color: '#fdcc8a' };
-            case 2: return { ...style, color: '#fc8d59' };
-            case 3: return { ...style, color: '#e34a33' };
-            case 4: return { ...style, color: '#b30000' };
-            default: return style;
+            case 1: return { ...style, fillColor:"#CC2A41",weight:1,color:"#CC2A41", opacity:0.8,fillOpacity: 0.8};
+            case 2: return { ...style, fillColor:"#FF8300",weight:1,color:"#FF8300", opacity:0.8,fillOpacity: 0.8};
+            case 3: return { ...style, fillColor:"#FFFF00",weight:1,color:"#FFFF00", opacity:0.8,fillOpacity: 0.8};
+            case 4: return { ...style, fillColor:"#CC2A41",weight:1,color:"#CC2A41", opacity:0.8,fillOpacity: 0.8};
+
+            default: return {...style, color:"rgba(0,0,0,0)",weight:0,fillOpacity:0};
           }
         },
         onEachFeature: (feature, layer) => {

@@ -128,7 +128,7 @@ define('api',['exports', 'aurelia-framework', 'aurelia-fetch-client', 'topojson-
 
     this.updateFloodState = function (localAreaId, state, username) {
       return new Promise(function (resolve, reject) {
-        return _this.http.fetch(DATA_URL + '/floods/' + localAreaId + '?username=' + username, _extends({}, auth, { method: 'put', body: json({ state: state }) })).then(function (response) {
+        return _this.http.fetch(DATA_URL + '/floods/' + localAreaId + '?username=' + username, _extends({}, auth, { method: 'put', body: (0, _aureliaFetchClient.json)({ state: state }) })).then(function (response) {
           if (response.status >= 400) reject(new Error('Unexpected error updating flood state'));
           response.json().then(function (data) {
             return resolve(data);
@@ -615,7 +615,8 @@ define('map',['exports', 'aurelia-framework', 'aurelia-router', 'aurelia-i18n', 
 
         _this.refreshing = false;
       }).catch(function (err) {
-        return _this.error = err.message;
+        _this.error = err.message;
+        _this.refreshing = false;
       });
 
       this.reportsLayer = new L.GeoJSON(null, {
@@ -679,7 +680,8 @@ define('map',['exports', 'aurelia-framework', 'aurelia-router', 'aurelia-i18n', 
         }).addTo(_this.map);
         _this.loading = false;
       }).catch(function (err) {
-        return _this.error = err.message;
+        _this.error = err.message;
+        _this.loading = false;
       });
     };
 
@@ -698,8 +700,8 @@ define('map',['exports', 'aurelia-framework', 'aurelia-router', 'aurelia-i18n', 
       this.tableData = this.floods.features.filter(function (flood) {
         return flood.properties.parent_name === district;
       }).sort(function (a, b) {
-        if (a.area_name < b.area_name) return -1;
-        if (a.area_name > b.area_name) return 1;
+        if (a.properties.area_name < b.properties.area_name) return -1;
+        if (a.properties.area_name > b.properties.area_name) return 1;
         return 0;
       });
     };
@@ -742,7 +744,7 @@ define('map',['exports', 'aurelia-framework', 'aurelia-router', 'aurelia-i18n', 
           var flood = _this2.floods.features.find(function (flood) {
             return flood.properties.area_id === floodState.area_id;
           });
-          if (flood) flood.state = floodState.state;
+          if (flood) flood.properties.state = floodState.state;
         };
 
         for (var _iterator4 = data.result, _isArray4 = Array.isArray(_iterator4), _i4 = 0, _iterator4 = _isArray4 ? _iterator4 : _iterator4[Symbol.iterator]();;) {
@@ -757,47 +759,20 @@ define('map',['exports', 'aurelia-framework', 'aurelia-router', 'aurelia-i18n', 
       });
     };
 
-    Map.prototype.clearFloodStates = function clearFloodStates() {
-      var _this3 = this;
-
-      if (!this.floods) return;
-
-      var ok = confirm('Are you sure you want to clear all flood states?');
-      if (!ok) return;
-
-      this.refreshing = true;
-
-      var flooded = this.floods.features.filter(function (flood) {
-        return flood.properties.state;
-      });
-
-      var promises = flooded.map(function (flood) {
-        return _this3.api.deleteFloodState(flood.properties.area_id, _this3.profile ? _this3.profile.email : 'rem');
-      });
-
-      Promise.all(promises).then(function () {
-        _this3.refreshFloodStates();
-
-        _this3.refreshing = false;
-      }).catch(function (err) {
-        return _this3.error = err.message;
-      });
-    };
-
     Map.prototype.refreshFloodReports = function refreshFloodReports() {
-      var _this4 = this;
+      var _this3 = this;
 
       this.refreshing = true;
 
       this.api.getReports().then(function (data) {
-        _this4.reportsLayer.clearLayers();
-        _this4.reportsLayer.addData(data);
+        _this3.reportsLayer.clearLayers();
+        _this3.reportsLayer.addData(data);
 
-        _this4.initReportCounts();
+        _this3.initReportCounts();
 
-        _this4.assignReportCounts(data);
+        _this3.assignReportCounts(data);
 
-        _this4.refreshing = false;
+        _this3.refreshing = false;
       });
     };
 
@@ -820,7 +795,7 @@ define('map',['exports', 'aurelia-framework', 'aurelia-router', 'aurelia-i18n', 
     };
 
     Map.prototype.assignReportCounts = function assignReportCounts(reports) {
-      var _this5 = this;
+      var _this4 = this;
 
       if (!reports || !this.floods) return;
 
@@ -836,7 +811,7 @@ define('map',['exports', 'aurelia-framework', 'aurelia-router', 'aurelia-i18n', 
 
         var report = _ref6;
 
-        var flood = _this5.floods.features.find(function (flood) {
+        var flood = _this4.floods.features.find(function (flood) {
           return flood.properties.area_id === report.properties.tags.local_area_id;
         });
 
@@ -852,14 +827,61 @@ define('map',['exports', 'aurelia-framework', 'aurelia-router', 'aurelia-i18n', 
       }
     };
 
-    Map.prototype.floodStateChanged = function floodStateChanged(area) {
-      console.log('New state is ' + area.properties.state + ' for ' + area.properties.area_id);
-    };
-
     Map.prototype.areaSelectedInTable = function areaSelectedInTable($event) {
       this.selectedArea = $event.detail.row;
       var layer = this.floodLayer.getLayer(this.selectedArea.properties.area_id);
       if (layer) layer.fireEvent('click');
+    };
+
+    Map.prototype.floodStateChanged = function floodStateChanged(area) {
+      var _this5 = this;
+
+      this.refreshing = true;
+
+      var promises = [];
+      var username = this.profile ? this.profile.email : 'rem';
+      if (area.properties.state > 0) {
+        promises.push(this.api.updateFloodState(area.properties.area_id, area.properties.state, username));
+      } else {
+        promises.push(this.api.deleteFloodState(area.properties.area_id, username));
+      }
+
+      Promise.all(promises).then(function (data) {
+        _this5.refreshFloodStates();
+
+        _this5.refreshing = false;
+      }).catch(function (err) {
+        _this5.error = err.message;
+        _this5.refreshing = false;
+      });
+    };
+
+    Map.prototype.clearFloodStates = function clearFloodStates() {
+      var _this6 = this;
+
+      if (!this.floods) return;
+
+      var ok = confirm('Are you sure you want to clear all flood states?');
+      if (!ok) return;
+
+      this.refreshing = true;
+
+      var flooded = this.floods.features.filter(function (flood) {
+        return flood.properties.state;
+      });
+
+      var promises = flooded.map(function (flood) {
+        return _this6.api.deleteFloodState(flood.properties.area_id, _this6.profile ? _this6.profile.email : 'rem');
+      });
+
+      Promise.all(promises).then(function () {
+        _this6.refreshFloodStates();
+
+        _this6.refreshing = false;
+      }).catch(function (err) {
+        _this6.error = err.message;
+        _this6.refreshing = false;
+      });
     };
 
     return Map;
@@ -984,7 +1006,7 @@ define('resources/value-converters/flood-state',['exports', '../../map', '../../
     }
 
     FloodStateValueConverter.prototype.toView = function toView(value) {
-      return value ? _environment2.default.floodStates[value] : '-';
+      return value ? _environment2.default.floodStates[value].severity : '-';
     };
 
     return FloodStateValueConverter;
@@ -4608,5 +4630,5 @@ module.exports = typeof window !== 'undefined' && window.atob && window.atob.bin
 define('text!app.html', ['module'], function(module) { module.exports = "<template>\n\n  <require from=\"bootstrap/css/bootstrap.css\"></require>\n  <require from=\"./styles.css\"></require>\n\n  <nav class=\"navbar navbar-default navbar-static-top\" role=\"navigation\">\n    <div class=\"container-fluid\">\n      <div class=\"navbar-header\">\n        <a route-href=\"route: home\">\n          <img class=\"logo\" src=\"assets/graphics/Peta_logo.svg\"/>\n        </a>\n      </div>\n      <div class=\"navbar-collapse collapse\">\n        <ul if.bind=\"isAuthenticated\" class=\"nav navbar-nav navbar-right\">\n          <li><a>User: ${username}</a></li>\n          <li><a route-href=\"route: map\">Map</a></li>\n          <li><a href=\"#\" click.delegate=\"logout()\"><span t=\"logout\" /></a></li>\n        </ul>\n        <ul if.bind=\"!isAuthenticated\" class=\"nav navbar-nav navbar-right\">\n          <li><a href=\"#\" click.delegate=\"login()\"><span t=\"login\" /></a></li>\n        </ul>\n      </div>\n    </div>\n  </nav>\n\n  <div class=\"container-fluid\">\n    <div class=\"row\">\n      <router-view class=\"col-md-12\"></router-view>\n    </div>\n  </div>\n\n</template>\n"; });
 define('text!styles.css', ['module'], function(module) { module.exports = "a:focus {\n  outline: none;\n}\n\n.btn-toolbar {\n  margin: 10px 0px 10px 0px;\n}\n\n.btn-toolbar .btn-group {\n  float: initial;\n}\n\n.logo {\n  height: 50px;\n  width: 120px;\n}\n\n.select-district {\n  width: 250px;\n  font-size: 16px;\n  margin-top: 8px;\n}\n\n.district-flood-count {\n  font-size: 16px;\n  margin-left: 8px;\n}\n\n.spinner {\n  height: 30px;\n  width: 30px;\n}\n"; });
 define('text!home.html', ['module'], function(module) { module.exports = "<template>\n  <div class=\"no-selection text-center\">\n    <h3>Please login to continue to the map</h3>\n  </div>\n</template>\n"; });
-define('text!map.html', ['module'], function(module) { module.exports = "<template>\n\n  <require from=\"leaflet/leaflet.css\"></require>\n  <require from=\"./styles.css\"></require>\n\n  <div class=\"map\">\n\n    <!-- Error Message Box -->\n    <div if.bind=\"error\" class=\"alert alert-danger\" role=\"alert\">\n      <span class=\"sr-only\">Error:</span>\n      ${error}\n    </div>\n\n    <loading-indicator loading.bind=\"loading\"></loading-indicator>\n\n    <!-- Map -->\n    <div id=\"mapContainer\" style=\"height:${mapHeight}px;\"></div>\n\n    <div class=\"btn-toolbar\">\n      <div class=\"row\">\n        <div class=\"col-md-4 text-left\">\n          <select value.bind=\"selectedDistrict\" change.delegate=\"districtChanged(selectedDistrict)\" class=\"select-district\">\n            <option value.bind=\"null\">${!districts ? 'Loading' : 'Select a district'}</option>\n            <option repeat.for=\"district of districts\" value.bind=\"district\">${district}</option>\n          </select>\n          <!--<span class=\"district-flood-count\" if.bind=\"selectedDistrict\">${selectedDistrict.reports ? selectedDistrict.reports : 0} Flood ${selectedDistrict.reports === 1 ? 'Report' : 'Reports'}</span>-->\n        </div>\n        <div class=\"col-md-4 text-center\">\n          <div class=\"btn-group\">\n            <button click.delegate=\"refreshFloodStates()\" class=\"btn btn-primary\">Refresh Flood States</button>\n            <button click.delegate=\"clearFloodStates()\" class=\"btn btn-danger\" if.bind=\"isEditor\">Clear Flood States</button>\n          </div>\n        </div>\n        <div class=\"col-md-4 text-right\">\n          <div class=\"pull-right\" style=\"visibility: ${refreshing ? 'visible' : 'hidden'}\">\n            <img class=\"spinner\" src=\"assets/icons/spinner.svg\"/>\n          </div>\n        </div>\n      </div>\n    </div>\n\n    <!-- Data Table -->\n    <div id=\"tableContainer\" style=\"overflow-y: scroll; height:${tableHeight}px;\">\n      <table class=\"table table-striped\" aurelia-table=\"data.bind: tableData;\n        display-data.bind: $areas; api.bind: tableApi;\">\n        <thead>\n          <tr>\n            <th class=\"col-md-1\">ID</th>\n            <th class=\"col-md-3\">Name</th>\n            <th class=\"col-md-3\">City</th>\n            <th class=\"col-md-2\">Geom ID</th>\n            <th class=\"col-md-1\">Reports</th>\n            <th class=\"col-md-2\">State</th>\n          </tr>\n        </thead>\n        <tbody>\n          <tr repeat.for=\"area of $areas\" aut-select=\"row.bind: area; selected-class: info\"\n            select.delegate=\"areaSelectedInTable($event)\">\n            <td>${area.properties.area_id}</td>\n            <td>${area.properties.area_name}</td>\n            <td>${area.properties.city_name}</td>\n            <td>${area.properties.geom_id}</td>\n            <td>${area.properties.reports}</td>\n            <td>\n              <select value.bind=\"area.properties.state\" if.bind=\"isEditor && area === selectedArea\"\n                change.delegate=\"floodStateChanged(area)\">\n                <option repeat.for=\"state of floodStates\" model.bind=\"state\">${state.severity}</option>\n              </select>\n              <span if.bind=\"!isEditor || area !== selectedArea\">${area.properties.state | floodState}</span>\n            </td>\n          </tr>\n        </tbody>\n      </table>\n    </div>\n\n  </div>\n</template>\n"; });
+define('text!map.html', ['module'], function(module) { module.exports = "<template>\n\n  <require from=\"leaflet/leaflet.css\"></require>\n  <require from=\"./styles.css\"></require>\n\n  <div class=\"map\">\n\n    <!-- Error Message Box -->\n    <div if.bind=\"error\" class=\"alert alert-danger\" role=\"alert\">\n      <span class=\"sr-only\">Error:</span>\n      ${error}\n    </div>\n\n    <loading-indicator loading.bind=\"loading\"></loading-indicator>\n\n    <!-- Map -->\n    <div id=\"mapContainer\" style=\"height:${mapHeight}px;\"></div>\n\n    <div class=\"btn-toolbar\">\n      <div class=\"row\">\n        <div class=\"col-md-4 text-left\">\n          <select value.bind=\"selectedDistrict\" change.delegate=\"districtChanged(selectedDistrict)\" class=\"select-district\">\n            <option value.bind=\"null\">${!districts ? 'Loading' : 'Select a district'}</option>\n            <option repeat.for=\"district of districts\" value.bind=\"district\">${district}</option>\n          </select>\n          <!--<span class=\"district-flood-count\" if.bind=\"selectedDistrict\">${selectedDistrict.reports ? selectedDistrict.reports : 0} Flood ${selectedDistrict.reports === 1 ? 'Report' : 'Reports'}</span>-->\n        </div>\n        <div class=\"col-md-4 text-center\">\n          <div class=\"btn-group\">\n            <button click.delegate=\"refreshFloodStates()\" class=\"btn btn-primary\">Refresh Flood States</button>\n            <button click.delegate=\"clearFloodStates()\" class=\"btn btn-danger\" if.bind=\"isEditor\">Clear Flood States</button>\n          </div>\n        </div>\n        <div class=\"col-md-4 text-right\">\n          <div class=\"pull-right\" style=\"visibility: ${refreshing ? 'visible' : 'hidden'}\">\n            <img class=\"spinner\" src=\"assets/icons/spinner.svg\"/>\n          </div>\n        </div>\n      </div>\n    </div>\n\n    <!-- Data Table -->\n    <div id=\"tableContainer\" style=\"overflow-y: scroll; height:${tableHeight}px;\">\n      <table class=\"table table-striped\" aurelia-table=\"data.bind: tableData;\n        display-data.bind: $areas; api.bind: tableApi;\">\n        <thead>\n          <tr>\n            <th class=\"col-md-1\">ID</th>\n            <th class=\"col-md-3\">Name</th>\n            <th class=\"col-md-3\">City</th>\n            <th class=\"col-md-2\">Geom ID</th>\n            <th class=\"col-md-1\">Reports</th>\n            <th class=\"col-md-2\">State</th>\n          </tr>\n        </thead>\n        <tbody>\n          <tr repeat.for=\"area of $areas\" aut-select=\"row.bind: area; selected-class: info\"\n            select.delegate=\"areaSelectedInTable($event)\">\n            <td>${area.properties.area_id}</td>\n            <td>${area.properties.area_name}</td>\n            <td>${area.properties.city_name}</td>\n            <td>${area.properties.geom_id}</td>\n            <td>${area.properties.reports}</td>\n            <td>\n              <select value.bind=\"area.properties.state\" if.bind=\"isEditor && area === selectedArea\"\n                change.delegate=\"floodStateChanged(area)\">\n                <option repeat.for=\"state of floodStates\" model.bind=\"state.level\">${state.severity}</option>\n              </select>\n              <span if.bind=\"!isEditor || area !== selectedArea\">${area.properties.state | floodState}</span>\n            </td>\n          </tr>\n        </tbody>\n      </table>\n    </div>\n\n  </div>\n</template>\n"; });
 //# sourceMappingURL=app-bundle.js.map

@@ -64,7 +64,7 @@
             <td>
               <select value.bind="area.properties.state" if.bind="isEditor && area === selectedArea"
                 change.delegate="floodStateChanged(area)">
-                <option repeat.for="state of floodStates" model.bind="state">${state.severity}</option>
+                <option repeat.for="state of floodStates" model.bind="state.level">${state.severity}</option>
               </select>
               <span if.bind="!isEditor || area !== selectedArea">${area.properties.state | floodState}</span>
             </td>

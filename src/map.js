@@ -136,7 +136,10 @@ export class Map {
       // Updated refreshing status
       this.refreshing = false;
     })
-    .catch((err) => this.error = err.message);
+    .catch((err) => {
+      this.error = err.message;
+      this.refreshing = false;
+    });
 
     // Create flood reports layer and add to the map
     this.reportsLayer = new L.GeoJSON(null, {
@@ -181,7 +184,10 @@ export class Map {
         collapsed: false
       }).addTo(this.map);
       this.loading = false;
-    }).catch((err) => this.error = err.message);
+    }).catch((err) => {
+      this.error = err.message;
+      this.loading = false;
+    });
   }
 
   // Can this view be activated i.e. is there a valid token?
@@ -201,9 +207,9 @@ export class Map {
     this.tableData = this.floods.features
       .filter((flood) => flood.properties.parent_name === district)
       .sort((a, b) => {
-        if (a.area_name < b.area_name)
+        if (a.properties.area_name < b.properties.area_name)
         return -1;
-        if (a.area_name > b.area_name)
+        if (a.properties.area_name > b.properties.area_name)
         return 1;
         return 0;
       });
@@ -225,42 +231,12 @@ export class Map {
       for (let floodState of data.result) {
         let flood = this.floods.features.find((flood) =>
           flood.properties.area_id === floodState.area_id);
-        if (flood) flood.state = floodState.state;
+        if (flood) flood.properties.state = floodState.state;
       }
 
       // Stop the spinner
       this.refreshing = false;
     });
-  }
-
-  // Iterate through all non null states and clear the state with a DELETE
-  clearFloodStates() {
-    // If no floods then return
-    if (!this.floods) return;
-
-    // Make sure the user really wants to clear all flood states
-    // TODO: Replace with a nicer dialog e.g. https://github.com/aurelia/dialog
-    let ok = confirm('Are you sure you want to clear all flood states?');
-    if (!ok) return;
-
-    // Start the spinner
-    this.refreshing = true;
-
-    // Filter out the flooded states
-    let flooded = this.floods.features.filter((flood) => flood.properties.state);
-
-    // Generate a delete request for each
-    let promises = flooded.map((flood) =>
-      this.api.deleteFloodState(flood.properties.area_id, this.profile ? this.profile.email : 'rem'));
-
-    // When all flood states have been cleared...
-    Promise.all(promises).then(() => {
-      // Refresh the flood states
-      this.refreshFloodStates();
-
-      // Stop the spinner
-      this.refreshing = false;
-    }).catch((err) => this.error = err.message);
   }
 
   // Refresh flood reports
@@ -304,15 +280,72 @@ export class Map {
     }
   }
 
-  // Set the state with the new state value
-  floodStateChanged(area) {
-    console.log(`New state is ${area.properties.state} for ${area.properties.area_id}`);
-  }
-
   // When an area has been selected in the table, select the area on the map
   areaSelectedInTable($event) {
     this.selectedArea = $event.detail.row;
     let layer = this.floodLayer.getLayer(this.selectedArea.properties.area_id);
     if (layer) layer.fireEvent('click');
+  }
+
+  // Set the state with the new state value
+  floodStateChanged(area) {
+    // Start the spinner
+    this.refreshing = true;
+
+    // If the new status is null then delete, otherwise update
+    let promises = [];
+    let username = this.profile ? this.profile.email : 'rem';
+    if (area.properties.state > 0) {
+      promises.push(this.api.updateFloodState(area.properties.area_id, area.properties.state, username));
+    } else {
+      promises.push(this.api.deleteFloodState(area.properties.area_id, username));
+    }
+
+    // Once the API action has been resolved refresh the table and map
+    Promise.all(promises).then((data) => {
+        // Refresh the flood states
+        this.refreshFloodStates();
+        // FIXME: Map needs to update to reflect the new status
+        // FIXME: There is a small lag between the update and table refresh and looks a little glitchy
+        // Stop the spinner
+        this.refreshing = false;
+      })
+      .catch((err) => {
+        this.error = err.message;
+        this.refreshing = false;
+      });
+  }
+
+  // Iterate through all non null states and clear the state with a DELETE
+  clearFloodStates() {
+    // If no floods then return
+    if (!this.floods) return;
+
+    // Make sure the user really wants to clear all flood states
+    // TODO: Replace with a nicer dialog e.g. https://github.com/aurelia/dialog
+    let ok = confirm('Are you sure you want to clear all flood states?');
+    if (!ok) return;
+
+    // Start the spinner
+    this.refreshing = true;
+
+    // Filter out the flooded states
+    let flooded = this.floods.features.filter((flood) => flood.properties.state);
+
+    // Generate a delete request for each
+    let promises = flooded.map((flood) =>
+      this.api.deleteFloodState(flood.properties.area_id, this.profile ? this.profile.email : 'rem'));
+
+    // When all flood states have been cleared...
+    Promise.all(promises).then(() => {
+      // Refresh the flood states
+      this.refreshFloodStates();
+
+      // Stop the spinner
+      this.refreshing = false;
+    }).catch((err) => {
+      this.error = err.message;
+      this.refreshing = false;
+    });
   }
 }

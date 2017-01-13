@@ -2,7 +2,7 @@ import { inject } from 'aurelia-framework';
 import { I18N } from 'aurelia-i18n';
 
 import { API } from './api';
-import { tokenIsExpired } from './utils';
+import { tokenIsExpired, getProfile } from './utils';
 import { Router } from 'aurelia-router';
 
 // TODO: Move into environment variables
@@ -38,9 +38,8 @@ export class App {
       this.username = null;
     } else {
       this.isAuthenticated = true;
-      let profile = localStorage.getItem('profile');
+      let profile = getProfile();
       if (profile) {
-        profile = JSON.parse(profile);
         this.isEditor = profile.app_metadata && profile.app_metadata.role === 'editor';
         this.username = profile.email;
       }

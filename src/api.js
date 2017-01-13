@@ -36,11 +36,11 @@ export class API {
   getFloods = () => new Promise((resolve, reject) => {
     return this.http.fetch(`${DATA_URL}/floods?city=jbd`, auth)
     .then((response) => {
-      if (response.status >= 400) reject(new Error('Unexpected error updating floods'));
+      if (response.status >= 400) reject(new Error('Unexpected error retrieving floods'));
       response.json().then((data) => resolve(convertTopoToGeo(data)));
     })
     .catch((err) => {
-      reject(new Error('Error updating floods', err));
+      reject(new Error('Error retrieving floods', err));
     });
   });
 
@@ -48,11 +48,11 @@ export class API {
   getFloodStates = () => new Promise((resolve, reject) => {
     return this.http.fetch(`${DATA_URL}/floods/states?city=jbd&minimum_state=1`, auth)
     .then((response) => {
-      if (response.status >= 400) reject(new Error('Unexpected updating flood states'));
+      if (response.status >= 400) reject(new Error('Unexpected error retrieving flood states'));
       response.json().then((data) => resolve(data));
     })
     .catch((err) => {
-      reject(new Error('Error updating flood states', err));
+      reject(new Error('Error retrieving flood states', err));
     });
   });
 
@@ -60,11 +60,11 @@ export class API {
   getInfrastructure = (type) => new Promise((resolve, reject) => {
     return this.http.fetch(`${DATA_URL}/infrastructure/${type}`, auth)
     .then((response) => {
-      if (response.status >= 400) reject(new Error('Unexpected updating infrastructure'));
+      if (response.status >= 400) reject(new Error('Unexpected error retrieving infrastructure'));
       response.json().then((data) => resolve(convertTopoToGeo(data)));
     })
     .catch((err) => {
-      reject(new Error('Error updating infrastructure', err));
+      reject(new Error('Error retrieving infrastructure', err));
     });
   });
 
@@ -72,27 +72,38 @@ export class API {
   getReports = () => new Promise((resolve, reject) => {
     return this.http.fetch(`${DATA_URL}/reports?city=jbd`, auth)
     .then((response) => {
-      if (response.status >= 400) reject(new Error('Unexpected updating flood reports'));
+      if (response.status >= 400) reject(new Error('Unexpected error retrieving flood reports'));
       response.json().then((data) => resolve(convertTopoToGeo(data)));
     })
     .catch((err) => {
-      reject(new Error('Error updating flood reports', err));
+      reject(new Error('Error retrieving flood reports', err));
     });
   });
 
   // Update the value of the flood state
-  // TOOD: To complete
   updateFloodState = (localAreaId, state, username) => new Promise((resolve, reject) => {
-    return this.http.fetch(`${DATA_URL}/floods/${localAreaId}`, ...auth, {
-      method: 'put',
-      body: json({ state, username })
-    })
+    return this.http.fetch(`${DATA_URL}/floods/${localAreaId}?username=${username}`,
+      { ...auth, ...{ method: 'put', body: json({ state }) } })
     .then((response) => {
-      if (response.status >= 400) reject(new Error('Unexpected updating flood state'));
+      if (response.status >= 400) reject(new Error('Unexpected error updating flood state'));
       response.json().then((data) => resolve(data));
     })
     .catch((err) => {
       reject(new Error('Error updating flood state', err));
+    });
+  });
+
+  // Delete the value of the flood state
+  deleteFloodState = (localAreaId, username) => new Promise((resolve, reject) => {
+    return this.http.fetch(`${DATA_URL}/floods/${localAreaId}?username=${username}`,
+      { ...auth, ...{ method: 'delete' } } )
+    .then((response) => {
+      console.log(response);
+      if (response.status >= 400) reject(new Error('Unexpected error deleting flood state'));
+      response.json().then((data) => resolve(data));
+    })
+    .catch((err) => {
+      reject(new Error('Error deleting flood state', err));
     });
   });
 

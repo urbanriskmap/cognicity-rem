@@ -5,7 +5,7 @@ import { I18N } from 'aurelia-i18n';
 import * as L from 'leaflet';
 
 import { API } from './api';
-import { tokenIsExpired } from './utils';
+import { tokenIsExpired, getProfile } from './utils';
 
 // Import environment variables
 import env from './environment';
@@ -35,9 +35,11 @@ export class Map {
   constructor(api, i18n) {
     this.api = api;
     this.i18n = i18n;
-    this.pageSize = 5;
+    this.profile = getProfile();
     this.loading = true;
     this.refreshing = true;
+    this.districts = null;
+    this.tableData = null;
     this.selectedDistrict = null;
     this.selectedArea = null;
     this.floodStates = env.floodStates;
@@ -93,7 +95,10 @@ export class Map {
           }
         },
         onEachFeature: (feature, layer) => {
-          layer._leaflet_id = feature.area_id;
+          // Assign the area_id as the unique id for the layer
+          layer._leaflet_id = feature.properties.area_id;
+
+          // Assign behaviours to the layer
           layer.on({
             mouseover: highlightFeature,
             mouseout: (e) => {
@@ -103,25 +108,30 @@ export class Map {
             click: (e) => {
               // Zoom to a given feature
               this.map.fitBounds(e.target.getBounds());
-              // Update the selectedDistrict with the parent district of the feature
-              this.selectedDistrict = this.districts.find((element) =>
-                element.name === e.target.feature.properties.parent_name);
+
+              // Update the selected area and selected district
+              this.selectedArea = this.floods.features.find((flood) =>
+                flood.properties.area_id === e.target.feature.properties.area_id)
+              this.selectedDistrict = this.selectedArea.properties.parent_name;
+              this.districtChanged(this.selectedDistrict);
+
               // Select the area in the table
-              this.selectedArea = this.selectedDistrict.areas.find((element) =>
-                element.area_id === e.target.feature.properties.area_id)
               this.selectedArea.$isSelected = true;
               this.tableApi.revealItem(this.selectedArea);
             }
           });
         }
-      });
-      this.floodLayer.addTo(this.map);
+      }).addTo(this.map);;
 
       // Fit the bounds to flood layer
       this.map.fitBounds(this.floodLayer.getBounds())
 
-      // Populate floods table
-      this.populateDistricts(this.floods);
+      // Initialise the districts list
+      this.initDistricts();
+
+      // Refresh flood reports layer then schedule to update automatically
+      this.refreshFloodReports();
+      setTimeout(() => this.refreshFloodReports(), config.reports_refresh);
 
       // Updated refreshing status
       this.refreshing = false;
@@ -140,10 +150,6 @@ export class Map {
       })
     });
     this.reportsLayer.addTo(this.map);
-
-    // Refresh flood reports layer then schedule to update automatically
-    this.refreshFloodReports();
-    setTimeout(() => this.refreshFloodReports(), config.reports_refresh);
 
     // Add infrastructure layers
     let infrastructureLayers = {};
@@ -165,8 +171,7 @@ export class Map {
           });
           infrastructureLayers[infrastructure.name] = layer;
           infrastructure.default && layer.addTo(this.map);
-        })
-        .catch((err) => this.error = err.message));
+        }));
     }
 
     // Add layers control once all layer promises have been resolved
@@ -176,7 +181,7 @@ export class Map {
         collapsed: false
       }).addTo(this.map);
       this.loading = false;
-    })
+    }).catch((err) => this.error = err.message);
   }
 
   // Can this view be activated i.e. is there a valid token?
@@ -186,75 +191,128 @@ export class Map {
     return true;
   }
 
-  // Populate the districts and their associated flood areas
-  populateDistricts(floods) {
-    let floodsObj = {};
-    for (let flood of this.floods.features) {
-      if (floodsObj[flood.properties.parent_name]) {
-        // If the parent exists then add another flood record to it
-        floodsObj[flood.properties.parent_name].push(flood.properties);
-      } else {
-        // Else if no parent record the create one with a new array
-        floodsObj[flood.properties.parent_name] = [flood.properties];
-      }
-    }
-
-    // Get the keys and sort them alphabetically
-    let parents = Object.keys(floodsObj);
-    parents.sort();
-
-    // Now assign all parents and their corresponding floods to an array
-    this.districts = [];
-    for (let parent of parents) {
-      this.districts.push({
-        name: parent,
-        areas: floodsObj[parent].sort((a,b) => {
-          if (a.area_name < b.area_name)
-          return -1;
-          if (a.area_name > b.area_name)
-          return 1;
-          return 0;
-        })
-      });
-    }
+  // Get a distinct list of districts from the floods data, sorted alphabetically
+  initDistricts() {
+    this.districts = Array.from(new Set(this.floods.features.map(flood => flood.properties.parent_name))).sort();
   }
 
+  // Refresh the tableData to reflect the new district
+  districtChanged(district) {
+    this.tableData = this.floods.features
+      .filter((flood) => flood.properties.parent_name === district)
+      .sort((a, b) => {
+        if (a.area_name < b.area_name)
+        return -1;
+        if (a.area_name > b.area_name)
+        return 1;
+        return 0;
+      });
+  }
 
   // Refresh the current flood states
   refreshFloodStates() {
+    // If no floods then return
+    if (!this.floods) return;
+
+    // Start the spinner
     this.refreshing = true;
-    this.api.getReports().then((data) => {
-      this.reportsLayer.clearLayers();
-      this.reportsLayer.addData(data);
+
+    this.api.getFloodStates().then((data) => {
+      // Clear all existing states
+      for (let flood of this.floods.features) flood.properties.state = null;
+
+      // Update floods with new state
+      for (let floodState of data.result) {
+        let flood = this.floods.features.find((flood) =>
+          flood.properties.area_id === floodState.area_id);
+        if (flood) flood.state = floodState.state;
+      }
+
+      // Stop the spinner
       this.refreshing = false;
     });
   }
 
+  // Iterate through all non null states and clear the state with a DELETE
+  clearFloodStates() {
+    // If no floods then return
+    if (!this.floods) return;
+
+    // Make sure the user really wants to clear all flood states
+    // TODO: Replace with a nicer dialog e.g. https://github.com/aurelia/dialog
+    let ok = confirm('Are you sure you want to clear all flood states?');
+    if (!ok) return;
+
+    // Start the spinner
+    this.refreshing = true;
+
+    // Filter out the flooded states
+    let flooded = this.floods.features.filter((flood) => flood.properties.state);
+
+    // Generate a delete request for each
+    let promises = flooded.map((flood) =>
+      this.api.deleteFloodState(flood.properties.area_id, this.profile ? this.profile.email : 'rem'));
+
+    // When all flood states have been cleared...
+    Promise.all(promises).then(() => {
+      // Refresh the flood states
+      this.refreshFloodStates();
+
+      // Stop the spinner
+      this.refreshing = false;
+    }).catch((err) => this.error = err.message);
+  }
+
   // Refresh flood reports
-  // TODO: Update report counts against areas
   refreshFloodReports() {
+    // Start the spinner
+    this.refreshing = true;
+
     this.api.getReports().then((data) => {
+      // Refresh the reports map layer
       this.reportsLayer.clearLayers();
       this.reportsLayer.addData(data);
+
+      // Initialise report counts
+      this.initReportCounts();
+
+      // Assign new report counts
+      this.assignReportCounts(data);
+
+      // Stop the spinner
+      this.refreshing = false;
     });
   }
 
-  // Set the state with the new state value
-  setState() {
-
+  // Clear the report counts for areas and districts
+  initReportCounts() {
+    for (let flood of this.floods.features) flood.properties.reports = 0;
   }
 
-  // TODO: Only a user with role=editor can clear states
-  // TODO: Iterate through all non zero states and clear the state with DELETE
-  clearStates() {
+  // Assign report counts to reflect the new reports
+  assignReportCounts(reports) {
+    // Return if we do not have the data we need
+    if (!reports || !this.floods) return;
 
+    for (let report of reports.features) {
+      // Find the flood object associated with the report
+      let flood = this.floods.features.find((flood) =>
+        flood.properties.area_id === report.properties.tags.local_area_id);
+
+      // Increment the reports count
+      flood && flood.properties.reports++;
+    }
+  }
+
+  // Set the state with the new state value
+  floodStateChanged(area) {
+    console.log(`New state is ${area.properties.state} for ${area.properties.area_id}`);
   }
 
   // When an area has been selected in the table, select the area on the map
-  areaSelectedInTable($event){
+  areaSelectedInTable($event) {
     this.selectedArea = $event.detail.row;
-    // FIXME: This interaction is not working as expected
-    // let layer = this.floodLayer.getLayer($event.detail.row.area_id);
-    // if (layer) layer.fireEvent('click');
+    let layer = this.floodLayer.getLayer(this.selectedArea.properties.area_id);
+    if (layer) layer.fireEvent('click');
   }
 }

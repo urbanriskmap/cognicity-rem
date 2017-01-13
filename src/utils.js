@@ -12,3 +12,9 @@ export function tokenIsExpired() {
   }
   return true;
 }
+
+export function getProfile() {
+  let profile = localStorage.getItem('profile');
+  if (profile) return JSON.parse(profile);
+  return null;
+}

@@ -33,6 +33,20 @@ define('api',['exports', 'aurelia-framework', 'aurelia-fetch-client', 'topojson-
     }
   }
 
+  var _extends = Object.assign || function (target) {
+    for (var i = 1; i < arguments.length; i++) {
+      var source = arguments[i];
+
+      for (var key in source) {
+        if (Object.prototype.hasOwnProperty.call(source, key)) {
+          target[key] = source[key];
+        }
+      }
+    }
+
+    return target;
+  };
+
   function _classCallCheck(instance, Constructor) {
     if (!(instance instanceof Constructor)) {
       throw new TypeError("Cannot call a class as a function");
@@ -63,12 +77,12 @@ define('api',['exports', 'aurelia-framework', 'aurelia-fetch-client', 'topojson-
     this.getFloods = function () {
       return new Promise(function (resolve, reject) {
         return _this.http.fetch(DATA_URL + '/floods?city=jbd', auth).then(function (response) {
-          if (response.status >= 400) reject(new Error('Unexpected error updating floods'));
+          if (response.status >= 400) reject(new Error('Unexpected error retrieving floods'));
           response.json().then(function (data) {
             return resolve(convertTopoToGeo(data));
           });
         }).catch(function (err) {
-          reject(new Error('Error updating floods', err));
+          reject(new Error('Error retrieving floods', err));
         });
       });
     };
@@ -76,12 +90,12 @@ define('api',['exports', 'aurelia-framework', 'aurelia-fetch-client', 'topojson-
     this.getFloodStates = function () {
       return new Promise(function (resolve, reject) {
         return _this.http.fetch(DATA_URL + '/floods/states?city=jbd&minimum_state=1', auth).then(function (response) {
-          if (response.status >= 400) reject(new Error('Unexpected updating flood states'));
+          if (response.status >= 400) reject(new Error('Unexpected error retrieving flood states'));
           response.json().then(function (data) {
             return resolve(data);
           });
         }).catch(function (err) {
-          reject(new Error('Error updating flood states', err));
+          reject(new Error('Error retrieving flood states', err));
         });
       });
     };
@@ -89,12 +103,12 @@ define('api',['exports', 'aurelia-framework', 'aurelia-fetch-client', 'topojson-
     this.getInfrastructure = function (type) {
       return new Promise(function (resolve, reject) {
         return _this.http.fetch(DATA_URL + '/infrastructure/' + type, auth).then(function (response) {
-          if (response.status >= 400) reject(new Error('Unexpected updating infrastructure'));
+          if (response.status >= 400) reject(new Error('Unexpected error retrieving infrastructure'));
           response.json().then(function (data) {
             return resolve(convertTopoToGeo(data));
           });
         }).catch(function (err) {
-          reject(new Error('Error updating infrastructure', err));
+          reject(new Error('Error retrieving infrastructure', err));
         });
       });
     };
@@ -102,30 +116,39 @@ define('api',['exports', 'aurelia-framework', 'aurelia-fetch-client', 'topojson-
     this.getReports = function () {
       return new Promise(function (resolve, reject) {
         return _this.http.fetch(DATA_URL + '/reports?city=jbd', auth).then(function (response) {
-          if (response.status >= 400) reject(new Error('Unexpected updating flood reports'));
+          if (response.status >= 400) reject(new Error('Unexpected error retrieving flood reports'));
           response.json().then(function (data) {
             return resolve(convertTopoToGeo(data));
           });
         }).catch(function (err) {
-          reject(new Error('Error updating flood reports', err));
+          reject(new Error('Error retrieving flood reports', err));
         });
       });
     };
 
     this.updateFloodState = function (localAreaId, state, username) {
       return new Promise(function (resolve, reject) {
-        var _http;
-
-        return (_http = _this.http).fetch.apply(_http, [DATA_URL + '/floods/' + localAreaId].concat(auth, [{
-          method: 'put',
-          body: json({ state: state, username: username })
-        }])).then(function (response) {
-          if (response.status >= 400) reject(new Error('Unexpected updating flood state'));
+        return _this.http.fetch(DATA_URL + '/floods/' + localAreaId + '?username=' + username, _extends({}, auth, { method: 'put', body: json({ state: state }) })).then(function (response) {
+          if (response.status >= 400) reject(new Error('Unexpected error updating flood state'));
           response.json().then(function (data) {
             return resolve(data);
           });
         }).catch(function (err) {
           reject(new Error('Error updating flood state', err));
+        });
+      });
+    };
+
+    this.deleteFloodState = function (localAreaId, username) {
+      return new Promise(function (resolve, reject) {
+        return _this.http.fetch(DATA_URL + '/floods/' + localAreaId + '?username=' + username, _extends({}, auth, { method: 'delete' })).then(function (response) {
+          console.log(response);
+          if (response.status >= 400) reject(new Error('Unexpected error deleting flood state'));
+          response.json().then(function (data) {
+            return resolve(data);
+          });
+        }).catch(function (err) {
+          reject(new Error('Error deleting flood state', err));
         });
       });
     };
@@ -178,9 +201,8 @@ define('app',['exports', 'aurelia-framework', 'aurelia-i18n', './api', './utils'
         this.username = null;
       } else {
         this.isAuthenticated = true;
-        var profile = localStorage.getItem('profile');
+        var profile = (0, _utils.getProfile)();
         if (profile) {
-          profile = JSON.parse(profile);
           this.isEditor = profile.app_metadata && profile.app_metadata.role === 'editor';
           this.username = profile.email;
         }
@@ -488,9 +510,11 @@ define('map',['exports', 'aurelia-framework', 'aurelia-router', 'aurelia-i18n', 
 
       this.api = api;
       this.i18n = i18n;
-      this.pageSize = 5;
+      this.profile = (0, _utils.getProfile)();
       this.loading = true;
       this.refreshing = true;
+      this.districts = null;
+      this.tableData = null;
       this.selectedDistrict = null;
       this.selectedArea = null;
       this.floodStates = _environment2.default.floodStates;
@@ -557,7 +581,8 @@ define('map',['exports', 'aurelia-framework', 'aurelia-router', 'aurelia-i18n', 
             }
           },
           onEachFeature: function onEachFeature(feature, layer) {
-            layer._leaflet_id = feature.area_id;
+            layer._leaflet_id = feature.properties.area_id;
+
             layer.on({
               mouseover: highlightFeature,
               mouseout: function mouseout(e) {
@@ -566,24 +591,27 @@ define('map',['exports', 'aurelia-framework', 'aurelia-router', 'aurelia-i18n', 
               click: function click(e) {
                 _this.map.fitBounds(e.target.getBounds());
 
-                _this.selectedDistrict = _this.districts.find(function (element) {
-                  return element.name === e.target.feature.properties.parent_name;
+                _this.selectedArea = _this.floods.features.find(function (flood) {
+                  return flood.properties.area_id === e.target.feature.properties.area_id;
                 });
+                _this.selectedDistrict = _this.selectedArea.properties.parent_name;
+                _this.districtChanged(_this.selectedDistrict);
 
-                _this.selectedArea = _this.selectedDistrict.areas.find(function (element) {
-                  return element.area_id === e.target.feature.properties.area_id;
-                });
                 _this.selectedArea.$isSelected = true;
                 _this.tableApi.revealItem(_this.selectedArea);
               }
             });
           }
-        });
-        _this.floodLayer.addTo(_this.map);
+        }).addTo(_this.map);;
 
         _this.map.fitBounds(_this.floodLayer.getBounds());
 
-        _this.populateDistricts(_this.floods);
+        _this.initDistricts();
+
+        _this.refreshFloodReports();
+        setTimeout(function () {
+          return _this.refreshFloodReports();
+        }, config.reports_refresh);
 
         _this.refreshing = false;
       }).catch(function (err) {
@@ -602,11 +630,6 @@ define('map',['exports', 'aurelia-framework', 'aurelia-router', 'aurelia-i18n', 
         }
       });
       this.reportsLayer.addTo(this.map);
-
-      this.refreshFloodReports();
-      setTimeout(function () {
-        return _this.refreshFloodReports();
-      }, config.reports_refresh);
 
       var infrastructureLayers = {};
 
@@ -638,8 +661,6 @@ define('map',['exports', 'aurelia-framework', 'aurelia-router', 'aurelia-i18n', 
           });
           infrastructureLayers[infrastructure.name] = layer;
           infrastructure.default && layer.addTo(_this.map);
-        }).catch(function (err) {
-          return _this.error = err.message;
         }));
       };
 
@@ -657,6 +678,8 @@ define('map',['exports', 'aurelia-framework', 'aurelia-router', 'aurelia-i18n', 
           collapsed: false
         }).addTo(_this.map);
         _this.loading = false;
+      }).catch(function (err) {
+        return _this.error = err.message;
       });
     };
 
@@ -665,84 +688,178 @@ define('map',['exports', 'aurelia-framework', 'aurelia-router', 'aurelia-i18n', 
       return true;
     };
 
-    Map.prototype.populateDistricts = function populateDistricts(floods) {
-      var floodsObj = {};
-      for (var _iterator3 = this.floods.features, _isArray3 = Array.isArray(_iterator3), _i3 = 0, _iterator3 = _isArray3 ? _iterator3 : _iterator3[Symbol.iterator]();;) {
-        var _ref3;
+    Map.prototype.initDistricts = function initDistricts() {
+      this.districts = Array.from(new Set(this.floods.features.map(function (flood) {
+        return flood.properties.parent_name;
+      }))).sort();
+    };
 
-        if (_isArray3) {
-          if (_i3 >= _iterator3.length) break;
-          _ref3 = _iterator3[_i3++];
-        } else {
-          _i3 = _iterator3.next();
-          if (_i3.done) break;
-          _ref3 = _i3.value;
-        }
-
-        var flood = _ref3;
-
-        if (floodsObj[flood.properties.parent_name]) {
-          floodsObj[flood.properties.parent_name].push(flood.properties);
-        } else {
-          floodsObj[flood.properties.parent_name] = [flood.properties];
-        }
-      }
-
-      var parents = Object.keys(floodsObj);
-      parents.sort();
-
-      this.districts = [];
-      for (var _iterator4 = parents, _isArray4 = Array.isArray(_iterator4), _i4 = 0, _iterator4 = _isArray4 ? _iterator4 : _iterator4[Symbol.iterator]();;) {
-        var _ref4;
-
-        if (_isArray4) {
-          if (_i4 >= _iterator4.length) break;
-          _ref4 = _iterator4[_i4++];
-        } else {
-          _i4 = _iterator4.next();
-          if (_i4.done) break;
-          _ref4 = _i4.value;
-        }
-
-        var parent = _ref4;
-
-        this.districts.push({
-          name: parent,
-          areas: floodsObj[parent].sort(function (a, b) {
-            if (a.area_name < b.area_name) return -1;
-            if (a.area_name > b.area_name) return 1;
-            return 0;
-          })
-        });
-      }
+    Map.prototype.districtChanged = function districtChanged(district) {
+      this.tableData = this.floods.features.filter(function (flood) {
+        return flood.properties.parent_name === district;
+      }).sort(function (a, b) {
+        if (a.area_name < b.area_name) return -1;
+        if (a.area_name > b.area_name) return 1;
+        return 0;
+      });
     };
 
     Map.prototype.refreshFloodStates = function refreshFloodStates() {
       var _this2 = this;
 
+      if (!this.floods) return;
+
       this.refreshing = true;
-      this.api.getReports().then(function (data) {
-        _this2.reportsLayer.clearLayers();
-        _this2.reportsLayer.addData(data);
+
+      this.api.getFloodStates().then(function (data) {
+        for (var _iterator3 = _this2.floods.features, _isArray3 = Array.isArray(_iterator3), _i3 = 0, _iterator3 = _isArray3 ? _iterator3 : _iterator3[Symbol.iterator]();;) {
+          var _ref3;
+
+          if (_isArray3) {
+            if (_i3 >= _iterator3.length) break;
+            _ref3 = _iterator3[_i3++];
+          } else {
+            _i3 = _iterator3.next();
+            if (_i3.done) break;
+            _ref3 = _i3.value;
+          }
+
+          var flood = _ref3;
+          flood.properties.state = null;
+        }
+        var _loop2 = function _loop2() {
+          if (_isArray4) {
+            if (_i4 >= _iterator4.length) return 'break';
+            _ref4 = _iterator4[_i4++];
+          } else {
+            _i4 = _iterator4.next();
+            if (_i4.done) return 'break';
+            _ref4 = _i4.value;
+          }
+
+          var floodState = _ref4;
+
+          var flood = _this2.floods.features.find(function (flood) {
+            return flood.properties.area_id === floodState.area_id;
+          });
+          if (flood) flood.state = floodState.state;
+        };
+
+        for (var _iterator4 = data.result, _isArray4 = Array.isArray(_iterator4), _i4 = 0, _iterator4 = _isArray4 ? _iterator4 : _iterator4[Symbol.iterator]();;) {
+          var _ref4;
+
+          var _ret2 = _loop2();
+
+          if (_ret2 === 'break') break;
+        }
+
         _this2.refreshing = false;
       });
     };
 
-    Map.prototype.refreshFloodReports = function refreshFloodReports() {
+    Map.prototype.clearFloodStates = function clearFloodStates() {
       var _this3 = this;
 
-      this.api.getReports().then(function (data) {
-        _this3.reportsLayer.clearLayers();
-        _this3.reportsLayer.addData(data);
+      if (!this.floods) return;
+
+      var ok = confirm('Are you sure you want to clear all flood states?');
+      if (!ok) return;
+
+      this.refreshing = true;
+
+      var flooded = this.floods.features.filter(function (flood) {
+        return flood.properties.state;
+      });
+
+      var promises = flooded.map(function (flood) {
+        return _this3.api.deleteFloodState(flood.properties.area_id, _this3.profile ? _this3.profile.email : 'rem');
+      });
+
+      Promise.all(promises).then(function () {
+        _this3.refreshFloodStates();
+
+        _this3.refreshing = false;
+      }).catch(function (err) {
+        return _this3.error = err.message;
       });
     };
 
-    Map.prototype.setState = function setState() {};
+    Map.prototype.refreshFloodReports = function refreshFloodReports() {
+      var _this4 = this;
 
-    Map.prototype.clearStates = function clearStates() {};
+      this.refreshing = true;
+
+      this.api.getReports().then(function (data) {
+        _this4.reportsLayer.clearLayers();
+        _this4.reportsLayer.addData(data);
+
+        _this4.initReportCounts();
+
+        _this4.assignReportCounts(data);
+
+        _this4.refreshing = false;
+      });
+    };
+
+    Map.prototype.initReportCounts = function initReportCounts() {
+      for (var _iterator5 = this.floods.features, _isArray5 = Array.isArray(_iterator5), _i5 = 0, _iterator5 = _isArray5 ? _iterator5 : _iterator5[Symbol.iterator]();;) {
+        var _ref5;
+
+        if (_isArray5) {
+          if (_i5 >= _iterator5.length) break;
+          _ref5 = _iterator5[_i5++];
+        } else {
+          _i5 = _iterator5.next();
+          if (_i5.done) break;
+          _ref5 = _i5.value;
+        }
+
+        var flood = _ref5;
+        flood.properties.reports = 0;
+      }
+    };
+
+    Map.prototype.assignReportCounts = function assignReportCounts(reports) {
+      var _this5 = this;
+
+      if (!reports || !this.floods) return;
+
+      var _loop3 = function _loop3() {
+        if (_isArray6) {
+          if (_i6 >= _iterator6.length) return 'break';
+          _ref6 = _iterator6[_i6++];
+        } else {
+          _i6 = _iterator6.next();
+          if (_i6.done) return 'break';
+          _ref6 = _i6.value;
+        }
+
+        var report = _ref6;
+
+        var flood = _this5.floods.features.find(function (flood) {
+          return flood.properties.area_id === report.properties.tags.local_area_id;
+        });
+
+        flood && flood.properties.reports++;
+      };
+
+      for (var _iterator6 = reports.features, _isArray6 = Array.isArray(_iterator6), _i6 = 0, _iterator6 = _isArray6 ? _iterator6 : _iterator6[Symbol.iterator]();;) {
+        var _ref6;
+
+        var _ret3 = _loop3();
+
+        if (_ret3 === 'break') break;
+      }
+    };
+
+    Map.prototype.floodStateChanged = function floodStateChanged(area) {
+      console.log('New state is ' + area.properties.state + ' for ' + area.properties.area_id);
+    };
 
     Map.prototype.areaSelectedInTable = function areaSelectedInTable($event) {
       this.selectedArea = $event.detail.row;
+      var layer = this.floodLayer.getLayer(this.selectedArea.properties.area_id);
+      if (layer) layer.fireEvent('click');
     };
 
     return Map;
@@ -758,6 +875,7 @@ define('utils',['exports', 'jwt-decode'], function (exports, jwtDecode) {
     value: true
   });
   exports.tokenIsExpired = tokenIsExpired;
+  exports.getProfile = getProfile;
   function tokenIsExpired() {
     var jwt = localStorage.getItem('id_token');
     if (jwt) {
@@ -768,6 +886,12 @@ define('utils',['exports', 'jwt-decode'], function (exports, jwtDecode) {
       if (new Date() < expiryDate) return false;
     }
     return true;
+  }
+
+  function getProfile() {
+    var profile = localStorage.getItem('profile');
+    if (profile) return JSON.parse(profile);
+    return null;
   }
 });
 define('resources/index',['exports'], function (exports) {
@@ -780,6 +904,57 @@ define('resources/index',['exports'], function (exports) {
   function configure(config) {
     config.globalResources(['./elements/loading-indicator', './value-converters/flood-state']);
   }
+});
+define('resources/elements/loading-indicator',['exports', 'nprogress', 'aurelia-framework'], function (exports, _nprogress, _aureliaFramework) {
+  'use strict';
+
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
+  exports.LoadingIndicator = undefined;
+
+  var nprogress = _interopRequireWildcard(_nprogress);
+
+  function _interopRequireWildcard(obj) {
+    if (obj && obj.__esModule) {
+      return obj;
+    } else {
+      var newObj = {};
+
+      if (obj != null) {
+        for (var key in obj) {
+          if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key];
+        }
+      }
+
+      newObj.default = obj;
+      return newObj;
+    }
+  }
+
+  function _classCallCheck(instance, Constructor) {
+    if (!(instance instanceof Constructor)) {
+      throw new TypeError("Cannot call a class as a function");
+    }
+  }
+
+  nprogress.configure({ showSpinner: false });
+
+  var LoadingIndicator = exports.LoadingIndicator = (0, _aureliaFramework.decorators)((0, _aureliaFramework.noView)(['nprogress/nprogress.css']), (0, _aureliaFramework.bindable)({ name: 'loading', defaultValue: false })).on(function () {
+    function _class() {
+      _classCallCheck(this, _class);
+    }
+
+    _class.prototype.loadingChanged = function loadingChanged(newValue) {
+      if (newValue) {
+        nprogress.start();
+      } else {
+        nprogress.done();
+      }
+    };
+
+    return _class;
+  }());
 });
 define('resources/value-converters/flood-state',['exports', '../../map', '../../environment'], function (exports, _map, _environment) {
   'use strict';
@@ -4430,60 +4605,8 @@ module.exports = typeof window !== 'undefined' && window.atob && window.atob.bin
 
 });
 
-define('resources/elements/loading-indicator',['exports', 'nprogress', 'aurelia-framework'], function (exports, _nprogress, _aureliaFramework) {
-  'use strict';
-
-  Object.defineProperty(exports, "__esModule", {
-    value: true
-  });
-  exports.LoadingIndicator = undefined;
-
-  var nprogress = _interopRequireWildcard(_nprogress);
-
-  function _interopRequireWildcard(obj) {
-    if (obj && obj.__esModule) {
-      return obj;
-    } else {
-      var newObj = {};
-
-      if (obj != null) {
-        for (var key in obj) {
-          if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key];
-        }
-      }
-
-      newObj.default = obj;
-      return newObj;
-    }
-  }
-
-  function _classCallCheck(instance, Constructor) {
-    if (!(instance instanceof Constructor)) {
-      throw new TypeError("Cannot call a class as a function");
-    }
-  }
-
-  nprogress.configure({ showSpinner: false });
-
-  var LoadingIndicator = exports.LoadingIndicator = (0, _aureliaFramework.decorators)((0, _aureliaFramework.noView)(['nprogress/nprogress.css']), (0, _aureliaFramework.bindable)({ name: 'loading', defaultValue: false })).on(function () {
-    function _class() {
-      _classCallCheck(this, _class);
-    }
-
-    _class.prototype.loadingChanged = function loadingChanged(newValue) {
-      if (newValue) {
-        nprogress.start();
-      } else {
-        nprogress.done();
-      }
-    };
-
-    return _class;
-  }());
-});
 define('text!app.html', ['module'], function(module) { module.exports = "<template>\n\n  <require from=\"bootstrap/css/bootstrap.css\"></require>\n  <require from=\"./styles.css\"></require>\n\n  <nav class=\"navbar navbar-default navbar-static-top\" role=\"navigation\">\n    <div class=\"container-fluid\">\n      <div class=\"navbar-header\">\n        <a route-href=\"route: home\">\n          <img class=\"logo\" src=\"assets/graphics/Peta_logo.svg\"/>\n        </a>\n      </div>\n      <div class=\"navbar-collapse collapse\">\n        <ul if.bind=\"isAuthenticated\" class=\"nav navbar-nav navbar-right\">\n          <li><a>User: ${username}</a></li>\n          <li><a route-href=\"route: map\">Map</a></li>\n          <li><a href=\"#\" click.delegate=\"logout()\"><span t=\"logout\" /></a></li>\n        </ul>\n        <ul if.bind=\"!isAuthenticated\" class=\"nav navbar-nav navbar-right\">\n          <li><a href=\"#\" click.delegate=\"login()\"><span t=\"login\" /></a></li>\n        </ul>\n      </div>\n    </div>\n  </nav>\n\n  <div class=\"container-fluid\">\n    <div class=\"row\">\n      <router-view class=\"col-md-12\"></router-view>\n    </div>\n  </div>\n\n</template>\n"; });
-define('text!styles.css', ['module'], function(module) { module.exports = "a:focus {\n  outline: none;\n}\n\n.btn-toolbar {\n  margin: 10px 0px 10px 0px;\n}\n\n.btn-toolbar .btn-group {\n  float: initial;\n}\n\n.logo {\n  height: 50px;\n  width: 120px;\n}\n\n.select-district {\n  width: 200px;\n  font-size: 16px;\n  margin-top: 8px;\n}\n\n.spinner {\n  height: 30px;\n  width: 30px;\n}\n"; });
+define('text!styles.css', ['module'], function(module) { module.exports = "a:focus {\n  outline: none;\n}\n\n.btn-toolbar {\n  margin: 10px 0px 10px 0px;\n}\n\n.btn-toolbar .btn-group {\n  float: initial;\n}\n\n.logo {\n  height: 50px;\n  width: 120px;\n}\n\n.select-district {\n  width: 250px;\n  font-size: 16px;\n  margin-top: 8px;\n}\n\n.district-flood-count {\n  font-size: 16px;\n  margin-left: 8px;\n}\n\n.spinner {\n  height: 30px;\n  width: 30px;\n}\n"; });
 define('text!home.html', ['module'], function(module) { module.exports = "<template>\n  <div class=\"no-selection text-center\">\n    <h3>Please login to continue to the map</h3>\n  </div>\n</template>\n"; });
-define('text!map.html', ['module'], function(module) { module.exports = "<template>\n\n  <require from=\"leaflet/leaflet.css\"></require>\n  <require from=\"./styles.css\"></require>\n\n  <div class=\"map\">\n\n    <!-- Error Message Box -->\n    <div if.bind=\"error\" class=\"alert alert-danger\" role=\"alert\">\n      <span class=\"sr-only\">Error:</span>\n      ${error}\n    </div>\n\n    <loading-indicator loading.bind=\"loading\"></loading-indicator>\n\n    <!-- Map -->\n    <div id=\"mapContainer\" style=\"height:${mapHeight}px;\"></div>\n\n    <div class=\"btn-toolbar\">\n      <div class=\"row\">\n        <div class=\"col-md-4 text-left\">\n          <select value.bind=\"selectedDistrict\" class=\"select-district\">\n            <option model.bind=\"null\">${!districts ? 'Loading' : 'Select a district'}</option>\n            <option repeat.for=\"district of districts\" model.bind=\"district\">${district.name}</option>\n          </select>\n        </div>\n        <div class=\"col-md-4 text-center\">\n          <div class=\"btn-group\">\n            <button click.delegate=\"refreshFloodStates()\" class=\"btn btn-primary\">Refresh Flood States</button>\n            <button click.delegate=\"clearFloodStates()\" class=\"btn btn-danger\" if.bind=\"isEditor\">Clear Flood States</button>\n          </div>\n        </div>\n        <div class=\"col-md-4 text-right\">\n          <div class=\"pull-right\" style=\"visibility: ${refreshing ? 'visible' : 'hidden'}\">\n            <img class=\"spinner\" src=\"assets/icons/spinner.svg\"/>\n          </div>\n        </div>\n      </div>\n    </div>\n\n    <!-- Data Table -->\n    <div id=\"tableContainer\" style=\"overflow-y: scroll; height:${tableHeight}px;\">\n      <table class=\"table table-striped\" aurelia-table=\"data.bind: selectedDistrict.areas;\n        display-data.bind: $areas; api.bind: tableApi;\">\n        <thead>\n          <tr>\n            <th class=\"col-md-1\">ID</th>\n            <th class=\"col-md-3\">Name</th>\n            <th class=\"col-md-3\">City</th>\n            <th class=\"col-md-2\">Geom ID</th>\n            <th class=\"col-md-1\">Reports</th>\n            <th class=\"col-md-2\">State</th>\n          </tr>\n        </thead>\n        <tbody>\n          <tr repeat.for=\"area of $areas\" aut-select=\"row.bind: area; selected-class: info\"\n            select.delegate=\"areaSelectedInTable($event)\">\n            <td>${area.area_id}</td>\n            <td>${area.area_name}</td>\n            <td>${area.city_name}</td>\n            <td>${area.geom_id}</td>\n            <td>0</td>\n            <td>\n              <select value.bind=\"area.state\" if.bind=\"isEditor && area === selectedArea\">\n                <option repeat.for=\"state of floodStates\" model.bind=\"state\">${state.severity}</option>\n              </select>\n              <span if.bind=\"!isEditor || area !== selectedArea\">${area.state | floodState}</span>\n            </td>\n          </tr>\n        </tbody>\n      </table>\n    </div>\n\n  </div>\n</template>\n"; });
-define('text!resources/elements/select-picker.html', ['module'], function(module) { module.exports = "<template>\n  <select class=\"selectpicker\">\n    <option repeat.for=\"p of selectableValues\">${p}</option>\n  </select>\n</template>\n"; });
+define('text!map.html', ['module'], function(module) { module.exports = "<template>\n\n  <require from=\"leaflet/leaflet.css\"></require>\n  <require from=\"./styles.css\"></require>\n\n  <div class=\"map\">\n\n    <!-- Error Message Box -->\n    <div if.bind=\"error\" class=\"alert alert-danger\" role=\"alert\">\n      <span class=\"sr-only\">Error:</span>\n      ${error}\n    </div>\n\n    <loading-indicator loading.bind=\"loading\"></loading-indicator>\n\n    <!-- Map -->\n    <div id=\"mapContainer\" style=\"height:${mapHeight}px;\"></div>\n\n    <div class=\"btn-toolbar\">\n      <div class=\"row\">\n        <div class=\"col-md-4 text-left\">\n          <select value.bind=\"selectedDistrict\" change.delegate=\"districtChanged(selectedDistrict)\" class=\"select-district\">\n            <option value.bind=\"null\">${!districts ? 'Loading' : 'Select a district'}</option>\n            <option repeat.for=\"district of districts\" value.bind=\"district\">${district}</option>\n          </select>\n          <!--<span class=\"district-flood-count\" if.bind=\"selectedDistrict\">${selectedDistrict.reports ? selectedDistrict.reports : 0} Flood ${selectedDistrict.reports === 1 ? 'Report' : 'Reports'}</span>-->\n        </div>\n        <div class=\"col-md-4 text-center\">\n          <div class=\"btn-group\">\n            <button click.delegate=\"refreshFloodStates()\" class=\"btn btn-primary\">Refresh Flood States</button>\n            <button click.delegate=\"clearFloodStates()\" class=\"btn btn-danger\" if.bind=\"isEditor\">Clear Flood States</button>\n          </div>\n        </div>\n        <div class=\"col-md-4 text-right\">\n          <div class=\"pull-right\" style=\"visibility: ${refreshing ? 'visible' : 'hidden'}\">\n            <img class=\"spinner\" src=\"assets/icons/spinner.svg\"/>\n          </div>\n        </div>\n      </div>\n    </div>\n\n    <!-- Data Table -->\n    <div id=\"tableContainer\" style=\"overflow-y: scroll; height:${tableHeight}px;\">\n      <table class=\"table table-striped\" aurelia-table=\"data.bind: tableData;\n        display-data.bind: $areas; api.bind: tableApi;\">\n        <thead>\n          <tr>\n            <th class=\"col-md-1\">ID</th>\n            <th class=\"col-md-3\">Name</th>\n            <th class=\"col-md-3\">City</th>\n            <th class=\"col-md-2\">Geom ID</th>\n            <th class=\"col-md-1\">Reports</th>\n            <th class=\"col-md-2\">State</th>\n          </tr>\n        </thead>\n        <tbody>\n          <tr repeat.for=\"area of $areas\" aut-select=\"row.bind: area; selected-class: info\"\n            select.delegate=\"areaSelectedInTable($event)\">\n            <td>${area.properties.area_id}</td>\n            <td>${area.properties.area_name}</td>\n            <td>${area.properties.city_name}</td>\n            <td>${area.properties.geom_id}</td>\n            <td>${area.properties.reports}</td>\n            <td>\n              <select value.bind=\"area.properties.state\" if.bind=\"isEditor && area === selectedArea\"\n                change.delegate=\"floodStateChanged(area)\">\n                <option repeat.for=\"state of floodStates\" model.bind=\"state\">${state.severity}</option>\n              </select>\n              <span if.bind=\"!isEditor || area !== selectedArea\">${area.properties.state | floodState}</span>\n            </td>\n          </tr>\n        </tbody>\n      </table>\n    </div>\n\n  </div>\n</template>\n"; });
 //# sourceMappingURL=app-bundle.js.map

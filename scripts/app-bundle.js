@@ -577,6 +577,8 @@ define('map',['exports', 'aurelia-framework', 'aurelia-router', 'aurelia-i18n', 
 
       this.currentFeature = null;
 
+      this.floodDict = {};
+
       this.api.getFloods().then(function (data) {
         _this.floods = data;
 
@@ -603,7 +605,8 @@ define('map',['exports', 'aurelia-framework', 'aurelia-router', 'aurelia-i18n', 
             }
           },
           onEachFeature: function onEachFeature(feature, layer) {
-            layer._leaflet_id = feature.properties.area_id;
+            _this.floodDict[feature.properties.area_id] = layer;
+
             layer.on({
               mouseover: highlightFeature,
               mouseout: function mouseout(e) {
@@ -791,6 +794,8 @@ define('map',['exports', 'aurelia-framework', 'aurelia-router', 'aurelia-i18n', 
 
           if (_ret2 === 'break') break;
         }
+        _this2.floodLayer.clearLayers();
+        _this2.floodLayer.addData(_this2.floods);
 
         _this2.refreshing = false;
       });
@@ -866,7 +871,7 @@ define('map',['exports', 'aurelia-framework', 'aurelia-router', 'aurelia-i18n', 
 
     Map.prototype.areaSelectedInTable = function areaSelectedInTable($event) {
       this.selectedArea = $event.detail.row;
-      var layer = this.floodLayer.getLayer(this.selectedArea.properties.area_id);
+      var layer = this.floodLayer.getLayer(this.floodDict[this.selectedArea.properties.area_id]._leaflet_id);
       if (layer) layer.fireEvent('click');
     };
 
@@ -910,7 +915,7 @@ define('map',['exports', 'aurelia-framework', 'aurelia-router', 'aurelia-i18n', 
       });
 
       var promises = flooded.map(function (flood) {
-        return _this6.api.deleteFloodState(flood.properties.area_id, _this6.profile ? _this6.profile.email : 'rem');
+        _this6.api.deleteFloodState(flood.properties.area_id, _this6.profile ? _this6.profile.email : 'rem');
       });
 
       Promise.all(promises).then(function () {

@@ -32,6 +32,7 @@ export class Map {
 
   @bindable({ defaultBindingMode: bindingMode.twoWay }) selectedDistrict;
 
+
   constructor(api, i18n) {
     this.api = api;
     this.i18n = i18n;
@@ -66,7 +67,8 @@ export class Map {
       },
       onAdd: function(map) {
         var container = L.DomUtil.create('div', 'info legend');
-	       container.innerHTML += '<div id="heightsLegend"><div class="sublegend"><div style="font-weight:bold">Tinggi Banjir</div><div><i class="color" style="background:#CC2A41;"></i><span>&nbsp;&gt; 150 cm</span></div><div><i class="color" style="background:#FF8300"></i><span>&nbsp;71 cm &ndash; 150 cm </span></div><div><i class="color" style="background:#FFFF00"></i><span>&nbsp;10 cm &ndash; 70 cm</span></div><i class="color" style="background:#A0A9F7"></i><span>&nbsp;RWs</span></div></div>';        return container;
+	       container.innerHTML += '<div id="heightsLegend"><div class="sublegend"><div style="font-weight:bold">Tinggi Banjir</div><div><i class="color" style="background:#CC2A41;"></i><span>&nbsp;&gt; 150 cm</span></div><div><i class="color" style="background:#FF8300"></i><span>&nbsp;71 cm &ndash; 150 cm </span></div><div><i class="color" style="background:#FFFF00"></i><span>&nbsp;10 cm &ndash; 70 cm</span></div><i class="color" style="background:#A0A9F7"></i><span>&nbsp;RWs</span></div></div>';
+         return container;
       }
     });
 
@@ -101,16 +103,16 @@ export class Map {
             fillOpacity: 0.1
           };
           switch (feature.properties.state) {
-            case 1: return { ...style, fillColor:"#CC2A41",weight:1,color:"#CC2A41", opacity:0.8,fillOpacity: 0.8};
-            case 2: return { ...style, fillColor:"#FF8300",weight:1,color:"#FF8300", opacity:0.8,fillOpacity: 0.8};
-            case 3: return { ...style, fillColor:"#FFFF00",weight:1,color:"#FFFF00", opacity:0.8,fillOpacity: 0.8};
             case 4: return { ...style, fillColor:"#CC2A41",weight:1,color:"#CC2A41", opacity:0.8,fillOpacity: 0.8};
+            case 3: return { ...style, fillColor:"#FF8300",weight:1,color:"#FF8300", opacity:0.8,fillOpacity: 0.8};
+            case 2: return { ...style, fillColor:"#FFFF00",weight:1,color:"#FFFF00", opacity:0.8,fillOpacity: 0.8};
+            case 1: return { ...style, fillColor:"#A0A9F7",weight:1,color:"#A0A9F7", opacity:0.8,fillOpacity: 0.8};
             default: return {...style, color:"#444",weight:0.2,opacity:1,fillOpacity:0};
           }
         },
         onEachFeature: (feature, layer) => {
           // Assign the area_id as the unique id for the layer
-          layer._leaflet_id = feature.properties.area_id;
+          //layer._leaflet_id = feature.properties.area_id; //This breaks everything.
 
           // Assign behaviours to the layer
           layer.on({
@@ -239,6 +241,11 @@ export class Map {
     this.refreshing = true;
 
     this.api.getFloodStates().then((data) => {
+
+      // Start map update
+      this.floodLayer.clearLayers();
+      this.floodLayer.addData(this.floods);
+
       // Clear all existing states
       for (let flood of this.floods.features) flood.properties.state = null;
 
@@ -248,7 +255,6 @@ export class Map {
           flood.properties.area_id === floodState.area_id);
         if (flood) flood.properties.state = floodState.state;
       }
-
       // Stop the spinner
       this.refreshing = false;
     });

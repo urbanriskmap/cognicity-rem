@@ -544,7 +544,8 @@ define('map',['exports', 'aurelia-framework', 'aurelia-router', 'aurelia-i18n', 
         },
         onAdd: function onAdd(map) {
           var container = L.DomUtil.create('div', 'info legend');
-          container.innerHTML += '<div id="heightsLegend"><div class="sublegend"><div style="font-weight:bold">Tinggi Banjir</div><div><i class="color" style="background:#CC2A41;"></i><span>&nbsp;&gt; 150 cm</span></div><div><i class="color" style="background:#FF8300"></i><span>&nbsp;71 cm &ndash; 150 cm </span></div><div><i class="color" style="background:#FFFF00"></i><span>&nbsp;10 cm &ndash; 70 cm</span></div><i class="color" style="background:#A0A9F7"></i><span>&nbsp;RWs</span></div></div>';return container;
+          container.innerHTML += '<div id="heightsLegend"><div class="sublegend"><div style="font-weight:bold">Tinggi Banjir</div><div><i class="color" style="background:#CC2A41;"></i><span>&nbsp;&gt; 150 cm</span></div><div><i class="color" style="background:#FF8300"></i><span>&nbsp;71 cm &ndash; 150 cm </span></div><div><i class="color" style="background:#FFFF00"></i><span>&nbsp;10 cm &ndash; 70 cm</span></div><i class="color" style="background:#A0A9F7"></i><span>&nbsp;RWs</span></div></div>';
+          return container;
         }
       });
 
@@ -587,21 +588,19 @@ define('map',['exports', 'aurelia-framework', 'aurelia-router', 'aurelia-i18n', 
               fillOpacity: 0.1
             };
             switch (feature.properties.state) {
-              case 1:
-                return _extends({}, style, { fillColor: "#CC2A41", weight: 1, color: "#CC2A41", opacity: 0.8, fillOpacity: 0.8 });
-              case 2:
-                return _extends({}, style, { fillColor: "#FF8300", weight: 1, color: "#FF8300", opacity: 0.8, fillOpacity: 0.8 });
-              case 3:
-                return _extends({}, style, { fillColor: "#FFFF00", weight: 1, color: "#FFFF00", opacity: 0.8, fillOpacity: 0.8 });
               case 4:
                 return _extends({}, style, { fillColor: "#CC2A41", weight: 1, color: "#CC2A41", opacity: 0.8, fillOpacity: 0.8 });
+              case 3:
+                return _extends({}, style, { fillColor: "#FF8300", weight: 1, color: "#FF8300", opacity: 0.8, fillOpacity: 0.8 });
+              case 2:
+                return _extends({}, style, { fillColor: "#FFFF00", weight: 1, color: "#FFFF00", opacity: 0.8, fillOpacity: 0.8 });
+              case 1:
+                return _extends({}, style, { fillColor: "#A0A9F7", weight: 1, color: "#A0A9F7", opacity: 0.8, fillOpacity: 0.8 });
               default:
                 return _extends({}, style, { color: "#444", weight: 0.2, opacity: 1, fillOpacity: 0 });
             }
           },
           onEachFeature: function onEachFeature(feature, layer) {
-            layer._leaflet_id = feature.properties.area_id;
-
             layer.on({
               mouseover: highlightFeature,
               mouseout: function mouseout(e) {
@@ -732,6 +731,9 @@ define('map',['exports', 'aurelia-framework', 'aurelia-router', 'aurelia-i18n', 
       this.refreshing = true;
 
       this.api.getFloodStates().then(function (data) {
+        _this2.floodLayer.clearLayers();
+        _this2.floodLayer.addData(_this2.floods);
+
         for (var _iterator3 = _this2.floods.features, _isArray3 = Array.isArray(_iterator3), _i3 = 0, _iterator3 = _isArray3 ? _iterator3 : _iterator3[Symbol.iterator]();;) {
           var _ref3;
 

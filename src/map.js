@@ -17,8 +17,8 @@ const config = env.mapConfig;
 const highlightFeature = (e) => {
   let layer = e.target;
   layer.setStyle({
-    weight: 5,
-    color: '#666',
+    weight: 2,
+    color: '#2e6da4',
     dashArray: '',
     fillOpacity: 0.7
   });

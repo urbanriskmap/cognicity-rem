@@ -497,8 +497,8 @@ define('map',['exports', 'aurelia-framework', 'aurelia-router', 'aurelia-i18n', 
   var highlightFeature = function highlightFeature(e) {
     var layer = e.target;
     layer.setStyle({
-      weight: 5,
-      color: '#666',
+      weight: 2,
+      color: '#2e6da4',
       dashArray: '',
       fillOpacity: 0.7
     });

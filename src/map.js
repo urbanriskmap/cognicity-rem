@@ -88,6 +88,9 @@ export class Map {
     // Keep track of all of our layer promises
     let layerPromises = [];
 
+    // Keep track of currently selected feature
+    this.currentFeature = null;
+
     // Get flood areas
     this.api.getFloods().then((data) => {
       this.floods = data;
@@ -112,20 +115,39 @@ export class Map {
         },
         onEachFeature: (feature, layer) => {
           // Assign the area_id as the unique id for the layer
-          //layer._leaflet_id = feature.properties.area_id; //This breaks everything.
+          layer._leaflet_id = feature.properties.area_id; //Does this breaks leaflet functionality?
 
           // Assign behaviours to the layer
           layer.on({
             mouseover: highlightFeature,
             mouseout: (e) => {
-              // Reset highlights on the flood layer
-              this.floodLayer.resetStyle(e.target);
+              if (this.currentFeature === null){
+                this.floodLayer.resetStyle(e.target);
+                }
+
+              else if (e.target !== this.currentFeature.target) {
+                this.floodLayer.resetStyle(e.target);
+              }
             },
             click: (e) => {
+
+              // release selection of previous feature
+              if (this.currentFeature !== null){
+                this.floodLayer.resetStyle(this.currentFeature.target);
+              }
+
+              e.target.setStyle({
+                weight: 2,
+                color: '#2e6da4',
+                dashArray: '',
+                fillOpacity: 0.7
+              });
+
               // Zoom to a given feature
               this.map.fitBounds(e.target.getBounds());
 
               // Update the selected area and selected district
+
               this.selectedArea = this.floods.features.find((flood) =>
                 flood.properties.area_id === e.target.feature.properties.area_id)
               this.selectedDistrict = this.selectedArea.properties.parent_name;
@@ -134,6 +156,8 @@ export class Map {
               // Select the area in the table
               this.selectedArea.$isSelected = true;
               this.tableApi.revealItem(this.selectedArea);
+
+              this.currentFeature = e;
             }
           });
         }
@@ -242,10 +266,6 @@ export class Map {
 
     this.api.getFloodStates().then((data) => {
 
-      // Start map update
-      this.floodLayer.clearLayers();
-      this.floodLayer.addData(this.floods);
-
       // Clear all existing states
       for (let flood of this.floods.features) flood.properties.state = null;
 
@@ -326,8 +346,8 @@ export class Map {
     Promise.all(promises).then((data) => {
         // Refresh the flood states
         this.refreshFloodStates();
-        // FIXME: Map needs to update to reflect the new status
-        // FIXME: There is a small lag between the update and table refresh and looks a little glitchy
+        // Fire a click event on selected polygon to update its symbology
+        this.currentFeature.target.fire('click');
         // Stop the spinner
         this.refreshing = false;
       })

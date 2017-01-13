@@ -575,6 +575,8 @@ define('map',['exports', 'aurelia-framework', 'aurelia-router', 'aurelia-i18n', 
 
       var layerPromises = [];
 
+      this.currentFeature = null;
+
       this.api.getFloods().then(function (data) {
         _this.floods = data;
 
@@ -601,12 +603,28 @@ define('map',['exports', 'aurelia-framework', 'aurelia-router', 'aurelia-i18n', 
             }
           },
           onEachFeature: function onEachFeature(feature, layer) {
+            layer._leaflet_id = feature.properties.area_id;
             layer.on({
               mouseover: highlightFeature,
               mouseout: function mouseout(e) {
-                _this.floodLayer.resetStyle(e.target);
+                if (_this.currentFeature === null) {
+                  _this.floodLayer.resetStyle(e.target);
+                } else if (e.target !== _this.currentFeature.target) {
+                  _this.floodLayer.resetStyle(e.target);
+                }
               },
               click: function click(e) {
+                if (_this.currentFeature !== null) {
+                  _this.floodLayer.resetStyle(_this.currentFeature.target);
+                }
+
+                e.target.setStyle({
+                  weight: 2,
+                  color: '#2e6da4',
+                  dashArray: '',
+                  fillOpacity: 0.7
+                });
+
                 _this.map.fitBounds(e.target.getBounds());
 
                 _this.selectedArea = _this.floods.features.find(function (flood) {
@@ -617,6 +635,8 @@ define('map',['exports', 'aurelia-framework', 'aurelia-router', 'aurelia-i18n', 
 
                 _this.selectedArea.$isSelected = true;
                 _this.tableApi.revealItem(_this.selectedArea);
+
+                _this.currentFeature = e;
               }
             });
           }
@@ -731,9 +751,6 @@ define('map',['exports', 'aurelia-framework', 'aurelia-router', 'aurelia-i18n', 
       this.refreshing = true;
 
       this.api.getFloodStates().then(function (data) {
-        _this2.floodLayer.clearLayers();
-        _this2.floodLayer.addData(_this2.floods);
-
         for (var _iterator3 = _this2.floods.features, _isArray3 = Array.isArray(_iterator3), _i3 = 0, _iterator3 = _isArray3 ? _iterator3 : _iterator3[Symbol.iterator]();;) {
           var _ref3;
 
@@ -868,6 +885,8 @@ define('map',['exports', 'aurelia-framework', 'aurelia-router', 'aurelia-i18n', 
 
       Promise.all(promises).then(function (data) {
         _this5.refreshFloodStates();
+
+        _this5.currentFeature.target.fire('click');
 
         _this5.refreshing = false;
       }).catch(function (err) {

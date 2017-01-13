@@ -666,7 +666,6 @@ define('map',['exports', 'aurelia-framework', 'aurelia-router', 'aurelia-i18n', 
             }
           });
           infrastructureLayers[infrastructure.name] = layer;
-          infrastructure.default && layer.addTo(_this.map);
         }));
       };
 

@@ -173,7 +173,8 @@ export class Map {
             })
           });
           infrastructureLayers[infrastructure.name] = layer;
-          infrastructure.default && layer.addTo(this.map);
+          // Disabled default infrastructure on the map
+          //infrastructure.default && layer.addTo(this.map);
         }));
     }
 

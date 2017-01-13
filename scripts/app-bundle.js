@@ -536,6 +536,8 @@ define('map',['exports', 'aurelia-framework', 'aurelia-router', 'aurelia-i18n', 
         attributionControl: false
       }).fitBounds([config.bounds.sw, config.bounds.ne]);
 
+      L.control.scale({ position: 'bottomright', metric: true, imperial: false }).addTo(this.map);
+
       var basemapLayers = {};
       for (var _iterator = config.basemaps, _isArray = Array.isArray(_iterator), _i = 0, _iterator = _isArray ? _iterator : _iterator[Symbol.iterator]();;) {
         var _ref;

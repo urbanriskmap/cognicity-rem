@@ -58,6 +58,8 @@ export class Map {
       attributionControl: false
     }).fitBounds([config.bounds.sw, config.bounds.ne]);
 
+    L.control.scale({position:'bottomright', metric:true, imperial:false}).addTo(this.map);
+
     // Add basemaps
     let basemapLayers = {};
     for (let basemap of config.basemaps) {

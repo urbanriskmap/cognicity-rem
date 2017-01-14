@@ -53,17 +53,17 @@ export default {
     infrastructure: [
       {
         type: 'floodgates',
-        name: 'Flood Gates',
+        name: 'Pintu air',
         default: true
       },
       {
         type: 'pumps',
-        name: 'Pumps',
+        name: 'Pompa',
         default: false
       },
       {
         type: 'waterways',
-        name: 'Waterways',
+        name: 'Jalan air',
         default: false
       }
     ],

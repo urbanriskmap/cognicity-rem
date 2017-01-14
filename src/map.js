@@ -202,15 +202,25 @@ export class Map {
        // Call the API to get the data storing the promise in an array
       layerPromises.push(this.api.getInfrastructure(infrastructure.type)
         .then((data) => {
-          let layer = new L.GeoJSON(data, {
-            pointToLayer: (feature, latlng) =>
-            L.marker(latlng, {
-              icon: L.icon({
-                iconUrl: `assets/icons/${infrastructure.type}Icon.svg`,
-                iconSize: [30, 30],
-                iconAnchor: [15, 15]
-              })
-            })
+          let layer = L.geoJSON(data, {
+            onEachFeature: (feature, layer) => {
+              layer.on({
+                click: (e) => {
+                  $('#myModal .modal-title').html(infrastructure.name);
+                  $('#myModal .modal-body').html(feature.properties.name);
+                  $('#myModal').modal();
+                }
+              });
+            },
+            pointToLayer: (feature, latlng) => {
+              return L.marker(latlng, {
+                icon: L.icon({
+                  iconUrl: `assets/icons/${infrastructure.type}Icon.svg`,
+                  iconSize: [30, 30],
+                  iconAnchor: [15, 15]
+                })
+              });
+            }
           });
           infrastructureLayers[infrastructure.name] = layer;
         }));

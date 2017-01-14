@@ -903,6 +903,7 @@ define('map',['exports', 'aurelia-framework', 'aurelia-router', 'aurelia-i18n', 
         _this6.refreshFloodStates();
       }).catch(function (err) {
         _this6.error = err.message;
+        _this6.refreshing = false;
       });
     };
 

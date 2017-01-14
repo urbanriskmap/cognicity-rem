@@ -117,9 +117,7 @@ export class Map {
           }
         },
         onEachFeature: (feature, layer) => {
-          // Assign the area_id as the unique id for the layer
-          //layer._leaflet_id = feature.properties.area_id; //This breaks a lot of stuff and is very bad.
-          //console.log(layer._leaflet_id);
+          // Keep track of Leaflet layers against area_id
           this.floodDict[feature.properties.area_id] = layer;
           // Assign behaviours to the layer
           layer.on({
@@ -134,7 +132,7 @@ export class Map {
               }
             },
             click: (e) => {
-              // release selection of previous feature
+              // Release selection of previous feature
               if (this.currentFeature !== null){
                 this.floodLayer.resetStyle(this.currentFeature.target);
               }
@@ -150,7 +148,6 @@ export class Map {
               this.map.fitBounds(e.target.getBounds());
 
               // Update the selected area and selected district
-
               this.selectedArea = this.floods.features.find((flood) =>
                 flood.properties.area_id === e.target.feature.properties.area_id)
               this.selectedDistrict = this.selectedArea.properties.parent_name;
@@ -391,9 +388,6 @@ export class Map {
     let ok = confirm('Are you sure you want to clear all flood states?');
     if (!ok) return;
 
-    // Start the spinner
-    //this.refreshing = true;
-
     // Filter out the flooded states
     let flooded = this.floods.features.filter((flood) => flood.properties.state);
 
@@ -404,17 +398,15 @@ export class Map {
       promises.push(this.api.deleteFloodState(flood.properties.area_id, this.profile ? this.profile.email : 'rem'))
     });
 
-    // When all flood states have been cleared...
+    // When all flood states have been cleared
     Promise.all(promises).then(() => {
 
       // Refresh the flood states
       this.refreshFloodStates();
 
-      // Stop the spinner
-      //this.refreshing = false;
     }).catch((err) => {
       this.error = err.message;
-      //this.refreshing = false;
+      this.refreshing = false;
     });
   }
 }

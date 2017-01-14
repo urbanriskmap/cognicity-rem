@@ -873,8 +873,6 @@ define('map',['exports', 'aurelia-framework', 'aurelia-router', 'aurelia-i18n', 
         _this5.refreshFloodStates();
 
         _this5.currentFeature.target.fire('click');
-
-        _this5.refreshing = false;
       }).catch(function (err) {
         _this5.error = err.message;
         _this5.refreshing = false;

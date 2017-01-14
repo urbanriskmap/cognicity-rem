@@ -213,8 +213,6 @@ export class Map {
             })
           });
           infrastructureLayers[infrastructure.name] = layer;
-          // Disabled default infrastructure on the map
-          //infrastructure.default && layer.addTo(this.map);
         }));
     }
 
@@ -364,13 +362,14 @@ export class Map {
 
     // Once the API action has been resolved refresh the table and map
     Promise.all(promises).then((data) => {
+
         // Refresh the flood states
         this.refreshFloodStates();
+
         // Fire a click event on selected polygon to update its symbology
+        // This speeds up UI feedback for the user
         this.currentFeature.target.fire('click');
 
-        // Stop the spinner
-        this.refreshing = false;
       })
       .catch((err) => {
         this.error = err.message;

@@ -95,6 +95,7 @@ export class API {
 
   // Delete the value of the flood state
   deleteFloodState = (localAreaId, username) => new Promise((resolve, reject) => {
+    console.log('delete called')
     return this.http.fetch(`${DATA_URL}/floods/${localAreaId}?username=${username}`,
       { ...auth, ...{ method: 'delete' } } )
     .then((response) => {

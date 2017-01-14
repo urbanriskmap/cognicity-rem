@@ -141,6 +141,7 @@ define('api',['exports', 'aurelia-framework', 'aurelia-fetch-client', 'topojson-
 
     this.deleteFloodState = function (localAreaId, username) {
       return new Promise(function (resolve, reject) {
+        console.log('delete called');
         return _this.http.fetch(DATA_URL + '/floods/' + localAreaId + '?username=' + username, _extends({}, auth, { method: 'delete' })).then(function (response) {
           console.log(response);
           if (response.status >= 400) reject(new Error('Unexpected error deleting flood state'));
@@ -749,11 +750,13 @@ define('map',['exports', 'aurelia-framework', 'aurelia-router', 'aurelia-i18n', 
     Map.prototype.refreshFloodStates = function refreshFloodStates() {
       var _this2 = this;
 
+      console.log('refresh flood states called');
+
       if (!this.floods) return;
 
       this.refreshing = true;
-
       this.api.getFloodStates().then(function (data) {
+
         _this2.floodLayer.clearLayers();
 
         var update = false;
@@ -761,13 +764,13 @@ define('map',['exports', 'aurelia-framework', 'aurelia-router', 'aurelia-i18n', 
 
         var i = _this2.floods.features.length;
         while (i--) {
-          _this2.floods.features[i].properties.state === null;
+          _this2.floods.features[i].properties.state = null;
 
           if (update) {
             var j = data.result.length;
             while (j--) {
               if (_this2.floods.features[i].properties.area_id === data.result[j].area_id) {
-                _this2.floods.features[i].properties.state === data.result[j].state;
+                _this2.floods.features[i].properties.state = data.result[j].state;
               }
             }
           }
@@ -890,8 +893,10 @@ define('map',['exports', 'aurelia-framework', 'aurelia-router', 'aurelia-i18n', 
         return flood.properties.state;
       });
 
-      var promises = flooded.map(function (flood) {
-        _this6.api.deleteFloodState(flood.properties.area_id, _this6.profile ? _this6.profile.email : 'rem');
+      var promises = [];
+
+      flooded.map(function (flood) {
+        promises.push(_this6.api.deleteFloodState(flood.properties.area_id, _this6.profile ? _this6.profile.email : 'rem'));
       });
 
       Promise.all(promises).then(function () {

@@ -261,15 +261,17 @@ export class Map {
 
   // Refresh the current flood states
   refreshFloodStates() {
+    console.log('refresh flood states called')
     // If no floods then return
     if (!this.floods) return;
     // Start the spinner
     this.refreshing = true;
-
     this.api.getFloodStates().then((data) => {
 
       // Clear the map layer
+
       this.floodLayer.clearLayers();
+
 
       // Check whether updates available from server
       let update = false;
@@ -280,7 +282,7 @@ export class Map {
         while (i--){ // Fast loop (see https://blogs.oracle.com/greimer/entry/best_way_to_code_a)
 
           // Set all states to null
-          this.floods.features[i].properties.state === null;
+          this.floods.features[i].properties.state = null;
 
           // Only proceed with update if there is new data from the server
           if (update){
@@ -289,7 +291,7 @@ export class Map {
             let j = data.result.length;
             while (j--){
               if (this.floods.features[i].properties.area_id === data.result[j].area_id){
-                this.floods.features[i].properties.state === data.result[j].state
+                this.floods.features[i].properties.state = data.result[j].state
               }
             }
           }
@@ -396,8 +398,10 @@ export class Map {
     let flooded = this.floods.features.filter((flood) => flood.properties.state);
 
     // Generate a delete request for each
-    let promises = flooded.map((flood) => {
-      this.api.deleteFloodState(flood.properties.area_id, this.profile ? this.profile.email : 'rem')
+    let promises = [];
+
+    flooded.map((flood) => {
+      promises.push(this.api.deleteFloodState(flood.properties.area_id, this.profile ? this.profile.email : 'rem'))
     });
 
     // When all flood states have been cleared...

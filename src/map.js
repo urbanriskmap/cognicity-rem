@@ -263,24 +263,39 @@ export class Map {
   refreshFloodStates() {
     // If no floods then return
     if (!this.floods) return;
-
     // Start the spinner
     this.refreshing = true;
 
     this.api.getFloodStates().then((data) => {
 
-      // Clear all existing states
-      for (let flood of this.floods.features) flood.properties.state = null;
-
-      // Update floods with new state
-      for (let floodState of data.result) {
-        let flood = this.floods.features.find((flood) =>
-          flood.properties.area_id === floodState.area_id);
-        if (flood) flood.properties.state = floodState.state;
-      }
+      // Clear the map layer
       this.floodLayer.clearLayers();
-      this.floodLayer.addData(this.floods);
 
+      // Check whether updates available from server
+      let update = false;
+      if (data.result.length > 0) update = true;
+
+      // Next, update flood states
+        let i = this.floods.features.length; // Local data to be Updated
+        while (i--){ // Fast loop (see https://blogs.oracle.com/greimer/entry/best_way_to_code_a)
+
+          // Set all states to null
+          this.floods.features[i].properties.state === null;
+
+          // Only proceed with update if there is new data from the server
+          if (update){
+
+            // Now apply updates from server
+            let j = data.result.length;
+            while (j--){
+              if (this.floods.features[i].properties.area_id === data.result[j].area_id){
+                this.floods.features[i].properties.state === data.result[j].state
+              }
+            }
+          }
+        }
+      // Re-add the layer to the map
+      this.floodLayer.addData(this.floods);
       // Stop the spinner
       this.refreshing = false;
     });
@@ -375,7 +390,7 @@ export class Map {
     if (!ok) return;
 
     // Start the spinner
-    this.refreshing = true;
+    //this.refreshing = true;
 
     // Filter out the flooded states
     let flooded = this.floods.features.filter((flood) => flood.properties.state);
@@ -392,10 +407,10 @@ export class Map {
       this.refreshFloodStates();
 
       // Stop the spinner
-      this.refreshing = false;
+      //this.refreshing = false;
     }).catch((err) => {
       this.error = err.message;
-      this.refreshing = false;
+      //this.refreshing = false;
     });
   }
 }

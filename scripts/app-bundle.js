@@ -754,47 +754,25 @@ define('map',['exports', 'aurelia-framework', 'aurelia-router', 'aurelia-i18n', 
       this.refreshing = true;
 
       this.api.getFloodStates().then(function (data) {
-        for (var _iterator3 = _this2.floods.features, _isArray3 = Array.isArray(_iterator3), _i3 = 0, _iterator3 = _isArray3 ? _iterator3 : _iterator3[Symbol.iterator]();;) {
-          var _ref3;
-
-          if (_isArray3) {
-            if (_i3 >= _iterator3.length) break;
-            _ref3 = _iterator3[_i3++];
-          } else {
-            _i3 = _iterator3.next();
-            if (_i3.done) break;
-            _ref3 = _i3.value;
-          }
-
-          var flood = _ref3;
-          flood.properties.state = null;
-        }
-        var _loop2 = function _loop2() {
-          if (_isArray4) {
-            if (_i4 >= _iterator4.length) return 'break';
-            _ref4 = _iterator4[_i4++];
-          } else {
-            _i4 = _iterator4.next();
-            if (_i4.done) return 'break';
-            _ref4 = _i4.value;
-          }
-
-          var floodState = _ref4;
-
-          var flood = _this2.floods.features.find(function (flood) {
-            return flood.properties.area_id === floodState.area_id;
-          });
-          if (flood) flood.properties.state = floodState.state;
-        };
-
-        for (var _iterator4 = data.result, _isArray4 = Array.isArray(_iterator4), _i4 = 0, _iterator4 = _isArray4 ? _iterator4 : _iterator4[Symbol.iterator]();;) {
-          var _ref4;
-
-          var _ret2 = _loop2();
-
-          if (_ret2 === 'break') break;
-        }
         _this2.floodLayer.clearLayers();
+
+        var update = false;
+        if (data.result.length > 0) update = true;
+
+        var i = _this2.floods.features.length;
+        while (i--) {
+          _this2.floods.features[i].properties.state === null;
+
+          if (update) {
+            var j = data.result.length;
+            while (j--) {
+              if (_this2.floods.features[i].properties.area_id === data.result[j].area_id) {
+                _this2.floods.features[i].properties.state === data.result[j].state;
+              }
+            }
+          }
+        }
+
         _this2.floodLayer.addData(_this2.floods);
 
         _this2.refreshing = false;
@@ -819,19 +797,19 @@ define('map',['exports', 'aurelia-framework', 'aurelia-router', 'aurelia-i18n', 
     };
 
     Map.prototype.initReportCounts = function initReportCounts() {
-      for (var _iterator5 = this.floods.features, _isArray5 = Array.isArray(_iterator5), _i5 = 0, _iterator5 = _isArray5 ? _iterator5 : _iterator5[Symbol.iterator]();;) {
-        var _ref5;
+      for (var _iterator3 = this.floods.features, _isArray3 = Array.isArray(_iterator3), _i3 = 0, _iterator3 = _isArray3 ? _iterator3 : _iterator3[Symbol.iterator]();;) {
+        var _ref3;
 
-        if (_isArray5) {
-          if (_i5 >= _iterator5.length) break;
-          _ref5 = _iterator5[_i5++];
+        if (_isArray3) {
+          if (_i3 >= _iterator3.length) break;
+          _ref3 = _iterator3[_i3++];
         } else {
-          _i5 = _iterator5.next();
-          if (_i5.done) break;
-          _ref5 = _i5.value;
+          _i3 = _iterator3.next();
+          if (_i3.done) break;
+          _ref3 = _i3.value;
         }
 
-        var flood = _ref5;
+        var flood = _ref3;
         flood.properties.reports = 0;
       }
     };
@@ -841,17 +819,17 @@ define('map',['exports', 'aurelia-framework', 'aurelia-router', 'aurelia-i18n', 
 
       if (!reports || !this.floods) return;
 
-      var _loop3 = function _loop3() {
-        if (_isArray6) {
-          if (_i6 >= _iterator6.length) return 'break';
-          _ref6 = _iterator6[_i6++];
+      var _loop2 = function _loop2() {
+        if (_isArray4) {
+          if (_i4 >= _iterator4.length) return 'break';
+          _ref4 = _iterator4[_i4++];
         } else {
-          _i6 = _iterator6.next();
-          if (_i6.done) return 'break';
-          _ref6 = _i6.value;
+          _i4 = _iterator4.next();
+          if (_i4.done) return 'break';
+          _ref4 = _i4.value;
         }
 
-        var report = _ref6;
+        var report = _ref4;
 
         var flood = _this4.floods.features.find(function (flood) {
           return flood.properties.area_id === report.properties.tags.local_area_id;
@@ -860,12 +838,12 @@ define('map',['exports', 'aurelia-framework', 'aurelia-router', 'aurelia-i18n', 
         flood && flood.properties.reports++;
       };
 
-      for (var _iterator6 = reports.features, _isArray6 = Array.isArray(_iterator6), _i6 = 0, _iterator6 = _isArray6 ? _iterator6 : _iterator6[Symbol.iterator]();;) {
-        var _ref6;
+      for (var _iterator4 = reports.features, _isArray4 = Array.isArray(_iterator4), _i4 = 0, _iterator4 = _isArray4 ? _iterator4 : _iterator4[Symbol.iterator]();;) {
+        var _ref4;
 
-        var _ret3 = _loop3();
+        var _ret2 = _loop2();
 
-        if (_ret3 === 'break') break;
+        if (_ret2 === 'break') break;
       }
     };
 
@@ -908,8 +886,6 @@ define('map',['exports', 'aurelia-framework', 'aurelia-router', 'aurelia-i18n', 
       var ok = confirm('Are you sure you want to clear all flood states?');
       if (!ok) return;
 
-      this.refreshing = true;
-
       var flooded = this.floods.features.filter(function (flood) {
         return flood.properties.state;
       });
@@ -920,11 +896,8 @@ define('map',['exports', 'aurelia-framework', 'aurelia-router', 'aurelia-i18n', 
 
       Promise.all(promises).then(function () {
         _this6.refreshFloodStates();
-
-        _this6.refreshing = false;
       }).catch(function (err) {
         _this6.error = err.message;
-        _this6.refreshing = false;
       });
     };
 

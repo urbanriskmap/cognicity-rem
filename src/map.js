@@ -145,7 +145,7 @@ export class Map {
               });
 
               // Zoom to a given feature
-              this.map.fitBounds(e.target.getBounds());
+              this.map.fitBounds(e.target.getBounds(), {maxZoom:14});
 
               // Update the selected area and selected district
               this.selectedArea = this.floods.features.find((flood) =>

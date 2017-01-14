@@ -629,7 +629,7 @@ define('map',['exports', 'aurelia-framework', 'aurelia-router', 'aurelia-i18n', 
                   fillOpacity: 0.7
                 });
 
-                _this.map.fitBounds(e.target.getBounds());
+                _this.map.fitBounds(e.target.getBounds(), { maxZoom: 14 });
 
                 _this.selectedArea = _this.floods.features.find(function (flood) {
                   return flood.properties.area_id === e.target.feature.properties.area_id;

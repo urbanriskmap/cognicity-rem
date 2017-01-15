@@ -9,9 +9,6 @@ import env from './environment';
 // URL for Cognicity Data API
 const DATA_URL = env.dataUrl;
 
-// Authentication headers
-const auth = { headers: { 'Authorization': 'Bearer ' + localStorage.getItem('id_token') } };
-
 // Convert topjson to geojson
 const convertTopoToGeo = (data) => new Promise((resolve, reject) => {
   if (!data || !data.result || data.result.type != 'Topology')
@@ -34,6 +31,8 @@ export class API {
 
   // Get floods as topojson, return geojson
   getFloods = () => new Promise((resolve, reject) => {
+    // Authentication headers
+    let auth = { headers: { 'Authorization': 'Bearer ' + localStorage.getItem('id_token') } };
     return this.http.fetch(`${DATA_URL}/floods?city=jbd`, auth)
     .then((response) => {
       if (response.status >= 400) reject(new Error('Unexpected error retrieving floods'));
@@ -46,6 +45,8 @@ export class API {
 
   // Get the latest flood states as json
   getFloodStates = () => new Promise((resolve, reject) => {
+    // Authentication headers
+    let auth = { headers: { 'Authorization': 'Bearer ' + localStorage.getItem('id_token') } };
     return this.http.fetch(`${DATA_URL}/floods/states?city=jbd&minimum_state=1`, auth)
     .then((response) => {
       if (response.status >= 400) reject(new Error('Unexpected error retrieving flood states'));
@@ -58,6 +59,8 @@ export class API {
 
   // Get infrastructure as topojson, return geojson
   getInfrastructure = (type) => new Promise((resolve, reject) => {
+    // Authentication headers
+    let auth = { headers: { 'Authorization': 'Bearer ' + localStorage.getItem('id_token') } };
     return this.http.fetch(`${DATA_URL}/infrastructure/${type}`, auth)
     .then((response) => {
       if (response.status >= 400) reject(new Error('Unexpected error retrieving infrastructure'));
@@ -70,6 +73,8 @@ export class API {
 
   // Get floodgauge data as topojson, return geojson
   getFloodgauges = () => new Promise((resolve, reject) => {
+    // Authentication headers
+    let auth = { headers: { 'Authorization': 'Bearer ' + localStorage.getItem('id_token') } };
     return this.http.fetch('https://data.petabencana.id/floodgauges', auth)
     .then((response) => {
       if (response.status >= 400) reject(new Error('Unexpected error retrieving infrastructure'));
@@ -82,6 +87,8 @@ export class API {
 
   // Get floods as topojson, return geojson
   getReports = () => new Promise((resolve, reject) => {
+    // Authentication headers
+    let auth = { headers: { 'Authorization': 'Bearer ' + localStorage.getItem('id_token') } };
     return this.http.fetch(`${DATA_URL}/reports?city=jbd`, auth)
     .then((response) => {
       if (response.status >= 400) reject(new Error('Unexpected error retrieving flood reports'));
@@ -94,6 +101,8 @@ export class API {
 
   // Update the value of the flood state
   updateFloodState = (localAreaId, state, username) => new Promise((resolve, reject) => {
+    // Authentication headers
+    let auth = { headers: { 'Authorization': 'Bearer ' + localStorage.getItem('id_token') } };
     return this.http.fetch(`${DATA_URL}/floods/${localAreaId}?username=${username}`,
       { ...auth, ...{ method: 'put', body: json({ state }) } })
     .then((response) => {
@@ -107,7 +116,9 @@ export class API {
 
   // Delete the value of the flood state
   deleteFloodState = (localAreaId, username) => new Promise((resolve, reject) => {
-    console.log('delete called')
+    console.log('delete called');
+    // Authentication headers
+    let auth = { headers: { 'Authorization': 'Bearer ' + localStorage.getItem('id_token') } };
     return this.http.fetch(`${DATA_URL}/floods/${localAreaId}?username=${username}`,
       { ...auth, ...{ method: 'delete' } } )
     .then((response) => {

@@ -113,6 +113,19 @@ define('api',['exports', 'aurelia-framework', 'aurelia-fetch-client', 'topojson-
       });
     };
 
+    this.getFloodgauges = function () {
+      return new Promise(function (resolve, reject) {
+        return _this.http.fetch('https://data.petabencana.id/floodgauges', auth).then(function (response) {
+          if (response.status >= 400) reject(new Error('Unexpected error retrieving infrastructure'));
+          response.json().then(function (data) {
+            return resolve(convertTopoToGeo(data));
+          });
+        }).catch(function (err) {
+          reject(new Error('Error retrieving infrastructure', err));
+        });
+      });
+    };
+
     this.getReports = function () {
       return new Promise(function (resolve, reject) {
         return _this.http.fetch(DATA_URL + '/reports?city=jbd', auth).then(function (response) {
@@ -266,7 +279,7 @@ define('environment',['exports'], function (exports) {
   exports.default = {
     debug: true,
     testing: true,
-    dataUrl: 'http://localhost:8001',
+    dataUrl: 'https://data-dev.petabencana.id',
     AUTH0_CLIENT_ID: 'ApdfZvV1BrxXmwdg6Djrle4m2nav5ub9',
     AUTH0_DOMAIN: 'petabencana.au.auth0.com',
     floodStates: [{

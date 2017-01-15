@@ -68,6 +68,18 @@ export class API {
     });
   });
 
+  // Get floodgauge data as topojson, return geojson
+  getFloodgauges = () => new Promise((resolve, reject) => {
+    return this.http.fetch('https://data.petabencana.id/floodgauges', auth)
+    .then((response) => {
+      if (response.status >= 400) reject(new Error('Unexpected error retrieving infrastructure'));
+      response.json().then((data) => resolve(convertTopoToGeo(data)));
+    })
+    .catch((err) => {
+      reject(new Error('Error retrieving infrastructure', err));
+    });
+  });
+
   // Get floods as topojson, return geojson
   getReports = () => new Promise((resolve, reject) => {
     return this.http.fetch(`${DATA_URL}/reports?city=jbd`, auth)

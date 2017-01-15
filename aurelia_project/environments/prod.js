@@ -1,6 +1,6 @@
 export default {
-  debug: true,
-  testing: true,
+  debug: false,
+  testing: false,
   dataUrl: 'https://data.petabencana.id',
   AUTH0_CLIENT_ID: 'ApdfZvV1BrxXmwdg6Djrle4m2nav5ub9',
   AUTH0_DOMAIN: 'petabencana.au.auth0.com',

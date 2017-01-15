@@ -1,7 +1,6 @@
 import environment from './environment';
 import Backend from 'i18next-xhr-backend';
 import 'whatwg-fetch';
-import Promise from 'promise-polyfill';
 
 //Configure Bluebird Promises.
 Promise.config({

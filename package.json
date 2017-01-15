@@ -27,7 +27,6 @@
     "jwt-decode": "^2.1.0",
     "leaflet": "^1.0.2",
     "nprogress": "^0.2.0",
-    "promise-polyfill": "^6.0.2",
     "requirejs": "^2.3.2",
     "text": "github:requirejs/text#latest",
     "topojson-client": "^2.1.0",

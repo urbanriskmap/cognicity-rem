@@ -583,7 +583,7 @@ define('map',['exports', 'aurelia-framework', 'aurelia-router', 'aurelia-i18n', 
       this.api.getFloods().then(function (data) {
         _this.floods = data;
 
-        _this.floodLayer = new L.GeoJSON(_this.floods, {
+        _this.floodLayer = L.geoJSON(_this.floods, {
           style: function style(feature) {
             var style = {
               stroke: true,
@@ -661,7 +661,7 @@ define('map',['exports', 'aurelia-framework', 'aurelia-router', 'aurelia-i18n', 
         _this.refreshing = false;
       });
 
-      this.reportsLayer = new L.GeoJSON(null, {
+      this.reportsLayer = L.geoJSON(null, {
         pointToLayer: function pointToLayer(feature, latlng) {
           return L.marker(latlng, {
             icon: L.icon({

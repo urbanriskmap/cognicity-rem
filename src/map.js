@@ -99,7 +99,7 @@ export class Map {
       this.floods = data;
 
       // Add floods layer to map
-      this.floodLayer = new L.GeoJSON(this.floods, {
+      this.floodLayer = L.geoJSON(this.floods, {
         style: (feature) => {
           let style = {
             stroke: true,
@@ -182,7 +182,7 @@ export class Map {
     });
 
     // Create flood reports layer and add to the map
-    this.reportsLayer = new L.GeoJSON(null, {
+    this.reportsLayer = L.geoJSON(null, {
       pointToLayer: (feature, latlng) =>
       L.marker(latlng, {
         icon: L.icon({

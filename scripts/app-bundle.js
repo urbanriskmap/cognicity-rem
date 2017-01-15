@@ -157,13 +157,21 @@ define('api',['exports', 'aurelia-framework', 'aurelia-fetch-client', 'topojson-
     this.http = http;
   }) || _class);
 });
-define('app',['exports', 'aurelia-framework', 'aurelia-i18n', './api', './utils', 'aurelia-router'], function (exports, _aureliaFramework, _aureliaI18n, _api, _utils, _aureliaRouter) {
+define('app',['exports', 'aurelia-framework', 'aurelia-i18n', './api', './utils', 'aurelia-router', './environment'], function (exports, _aureliaFramework, _aureliaI18n, _api, _utils, _aureliaRouter, _environment) {
   'use strict';
 
   Object.defineProperty(exports, "__esModule", {
     value: true
   });
   exports.App = undefined;
+
+  var _environment2 = _interopRequireDefault(_environment);
+
+  function _interopRequireDefault(obj) {
+    return obj && obj.__esModule ? obj : {
+      default: obj
+    };
+  }
 
   function _classCallCheck(instance, Constructor) {
     if (!(instance instanceof Constructor)) {
@@ -173,8 +181,8 @@ define('app',['exports', 'aurelia-framework', 'aurelia-i18n', './api', './utils'
 
   var _dec, _class;
 
-  var AUTH0_CLIENT_ID = 'ApdfZvV1BrxXmwdg6Djrle4m2nav5ub9';
-  var AUTH0_DOMAIN = 'petabencana.au.auth0.com';
+  var AUTH0_CLIENT_ID = _environment2.default.AUTH0_CLIENT_ID;
+  var AUTH0_DOMAIN = _environment2.default.AUTH0_DOMAIN;
 
   if (!AUTH0_CLIENT_ID || !AUTH0_DOMAIN) throw new Error('Auth0 credentials are required');
 
@@ -259,25 +267,27 @@ define('environment',['exports'], function (exports) {
     debug: true,
     testing: true,
     dataUrl: 'http://localhost:8001',
+    AUTH0_CLIENT_ID: 'ApdfZvV1BrxXmwdg6Djrle4m2nav5ub9',
+    AUTH0_DOMAIN: 'petabencana.au.auth0.com',
     floodStates: [{
       level: null,
-      severity: 'Clear',
+      severity: 'Ada banjir',
       levelDescription: 'NO FLOODING'
     }, {
       level: 1,
-      severity: 'Unknown',
+      severity: 'Hati-hati!',
       levelDescription: 'AN UNKNOWN LEVEL OF FLOODING - USE CAUTION -'
     }, {
       level: 2,
-      severity: 'Minor',
+      severity: '10 cm - 70 cm',
       levelDescription: 'FLOODING OF BETWEEN 10 and 70 CENTIMETERS'
     }, {
       level: 3,
-      severity: 'Moderate',
+      severity: '71 cm - 150 cm',
       levelDescription: 'FLOODING OF BETWEEN 71 and 150 CENTIMETERS'
     }, {
       level: 4,
-      severity: 'Severe',
+      severity: '> 150 cm',
       levelDescription: 'FLOODING OF OVER 150 CENTIMETERS'
     }],
     mapConfig: {
@@ -545,7 +555,7 @@ define('map',['exports', 'aurelia-framework', 'aurelia-router', 'aurelia-i18n', 
         },
         onAdd: function onAdd(map) {
           var container = L.DomUtil.create('div', 'info legend');
-          container.innerHTML += '<div id="heightsLegend"><div class="sublegend"><div style="font-weight:bold">Tinggi Banjir</div><div><i class="color" style="background:#CC2A41;"></i><span>&nbsp;&gt; 150 cm</span></div><div><i class="color" style="background:#FF8300"></i><span>&nbsp;71 cm &ndash; 150 cm </span></div><div><i class="color" style="background:#FFFF00"></i><span>&nbsp;10 cm &ndash; 70 cm</span></div><i class="color" style="background:#A0A9F7"></i><span>&nbsp;RWs</span></div></div>';
+          container.innerHTML += '<div id="heightsLegend"><div class="sublegend"><div style="font-weight:bold">Tinggi Banjir</div><div><i class="color" style="background:#CC2A41;"></i><span>&nbsp;&gt; 150 cm</span></div><div><i class="color" style="background:#FF8300"></i><span>&nbsp;71 cm &ndash; 150 cm </span></div><div><i class="color" style="background:#FFFF00"></i><span>&nbsp;10 cm &ndash; 70 cm</span></div><i class="color" style="background:#A0A9F7"></i><span>&nbsp;Hati-hati!</span></div></div>';
           return container;
         }
       });
@@ -674,7 +684,6 @@ define('map',['exports', 'aurelia-framework', 'aurelia-router', 'aurelia-i18n', 
         onEachFeature: function onEachFeature(feature, layer) {
           layer.on({
             click: function click(e) {
-              console.log(feature.properties.image_url);
               _this.map.setView(e.target._latlng, 15);
               $('#myModal .modal-title').html(feature.properties.title || 'Banjir laporkan');
               $('#myModal .modal-body').html(feature.properties.text);
@@ -740,7 +749,7 @@ define('map',['exports', 'aurelia-framework', 'aurelia-router', 'aurelia-i18n', 
       Promise.all(layerPromises).then(function () {
         L.control.layers(basemapLayers, infrastructureLayers, {
           position: 'bottomleft',
-          collapsed: false
+          collapsed: true
         }).addTo(_this.map);
         _this.loading = false;
       }).catch(function (err) {
@@ -779,7 +788,6 @@ define('map',['exports', 'aurelia-framework', 'aurelia-router', 'aurelia-i18n', 
 
       this.refreshing = true;
       this.api.getFloodStates().then(function (data) {
-
         _this2.floodLayer.clearLayers();
 
         var update = false;
@@ -907,7 +915,7 @@ define('map',['exports', 'aurelia-framework', 'aurelia-router', 'aurelia-i18n', 
 
       if (!this.floods) return;
 
-      var ok = confirm('Are you sure you want to clear all flood states?');
+      var ok = confirm('Apakah Anda yakin ingin menghapus semua banjir?');
       if (!ok) return;
 
       var flooded = this.floods.features.filter(function (flood) {
@@ -4779,8 +4787,8 @@ module.exports = typeof window !== 'undefined' && window.atob && window.atob.bin
 
 });
 
-define('text!app.html', ['module'], function(module) { module.exports = "<template>\n\n  <require from=\"bootstrap/css/bootstrap.css\"></require>\n  <require from=\"./styles.css\"></require>\n\n  <nav class=\"navbar navbar-default navbar-static-top\" role=\"navigation\">\n    <div class=\"container-fluid\">\n      <div class=\"navbar-header\">\n        <a route-href=\"route: home\">\n          <img class=\"logo\" src=\"assets/graphics/Peta_logo.svg\"/>\n        </a>\n      </div>\n      <div class=\"navbar-collapse collapse\">\n        <ul if.bind=\"isAuthenticated\" class=\"nav navbar-nav navbar-right\">\n          <li><a>User: ${username}</a></li>\n          <li><a route-href=\"route: map\">Map</a></li>\n          <li><a href=\"#\" click.delegate=\"logout()\"><span t=\"logout\" /></a></li>\n        </ul>\n        <ul if.bind=\"!isAuthenticated\" class=\"nav navbar-nav navbar-right\">\n          <li><a href=\"#\" click.delegate=\"login()\"><span t=\"login\" /></a></li>\n        </ul>\n      </div>\n    </div>\n  </nav>\n\n  <div class=\"container-fluid\">\n    <div class=\"row\">\n      <router-view class=\"col-md-12\"></router-view>\n    </div>\n  </div>\n\n</template>\n"; });
+define('text!app.html', ['module'], function(module) { module.exports = "<template>\n\n  <require from=\"bootstrap/css/bootstrap.css\"></require>\n  <require from=\"./styles.css\"></require>\n\n  <nav class=\"navbar navbar-default navbar-static-top\" role=\"navigation\">\n    <div class=\"container-fluid\">\n      <div class=\"navbar-header\">\n        <a route-href=\"route: home\">\n          <img class=\"logo\" src=\"assets/graphics/Peta_logo.svg\"/>\n        </a>\n      </div>\n      <div class=\"navbar-collapse collapse\">\n        <ul if.bind=\"isAuthenticated\" class=\"nav navbar-nav navbar-right\">\n          <li><a>Pemakai: ${username}</a></li>\n          <li><a route-href=\"route: map\">Peta</a></li>\n          <li><a href=\"#\" click.delegate=\"logout()\"><span t=\"logout\" /></a></li>\n        </ul>\n        <ul if.bind=\"!isAuthenticated\" class=\"nav navbar-nav navbar-right\">\n          <li><a href=\"#\" click.delegate=\"login()\"><span t=\"login\" /></a></li>\n        </ul>\n      </div>\n    </div>\n  </nav>\n\n  <div class=\"container-fluid\">\n    <div class=\"row\">\n      <router-view class=\"col-md-12\"></router-view>\n    </div>\n  </div>\n\n</template>\n"; });
 define('text!styles.css', ['module'], function(module) { module.exports = "a:focus {\n  outline: none;\n}\n\n.btn-toolbar {\n  margin: 10px 0px 10px 0px;\n}\n\n.btn-toolbar .btn-group {\n  float: initial;\n}\n\n.logo {\n  height: 50px;\n  width: 120px;\n}\n\n.select-district {\n  width: 250px;\n  font-size: 16px;\n  margin-top: 8px;\n}\n\n.district-flood-count {\n  font-size: 16px;\n  margin-left: 8px;\n}\n\n.spinner {\n  height: 30px;\n  width: 30px;\n}\n\n.info {\n    padding: 6px 8px;\n    margin: 5px;\n    font: 14px/16px Arial, Helvetica, sans-serif;\n    background: white;\n    background: rgba(255,255,255,0.95);\n    box-shadow: 0 0 15px rgba(0,0,0,0.2);\n    border-radius: 5px;\n    white-space: normal;\n}\n\n.legend {\n     color: #555;\n     font-size: 9px;\n     line-height: normal;\n     font-family: Lato:100;\n     margin:0px;\n     padding:5px;\n}\n\n.legend i.color {\n      width: 24px;\n      height: 18px;\n      float: left;\n      margin-right: 0;\n      opacity: 0.7;\n      margin-bottom:0;\n}\n\n.sublegend {\n  margin:3px;\n  line-height: 18px;\n}\n"; });
-define('text!home.html', ['module'], function(module) { module.exports = "<template>\n  <div class=\"no-selection text-center\">\n    <h3>Please login to continue to the map</h3>\n  </div>\n</template>\n"; });
-define('text!map.html', ['module'], function(module) { module.exports = "<template>\n\n  <require from=\"leaflet/leaflet.css\"></require>\n  <require from=\"./styles.css\"></require>\n\n  <div class=\"map\">\n\n    <!-- Error Message Box -->\n    <div if.bind=\"error\" class=\"alert alert-danger\" role=\"alert\">\n      <span class=\"sr-only\">Error:</span>\n      ${error}\n    </div>\n\n    <loading-indicator loading.bind=\"loading\"></loading-indicator>\n\n    <!-- Map -->\n    <div id=\"mapContainer\" style=\"height:${mapHeight}px;\"></div>\n\n    <div class=\"btn-toolbar\">\n      <div class=\"row\">\n        <div class=\"col-md-4 text-left\">\n          <select value.bind=\"selectedDistrict\" change.delegate=\"districtChanged(selectedDistrict)\" class=\"select-district\">\n            <option value.bind=\"null\">${!districts ? 'Loading' : 'Select a district'}</option>\n            <option repeat.for=\"district of districts\" value.bind=\"district\">${district}</option>\n          </select>\n          <!--<span class=\"district-flood-count\" if.bind=\"selectedDistrict\">${selectedDistrict.reports ? selectedDistrict.reports : 0} Flood ${selectedDistrict.reports === 1 ? 'Report' : 'Reports'}</span>-->\n        </div>\n        <div class=\"col-md-4 text-center\">\n          <div class=\"btn-group\">\n            <button click.delegate=\"refreshFloodStates()\" class=\"btn btn-primary\">Refresh Flood States</button>\n            <button click.delegate=\"clearFloodStates()\" class=\"btn btn-danger\" if.bind=\"isEditor\">Clear Flood States</button>\n          </div>\n        </div>\n        <div class=\"col-md-4 text-right\">\n          <div class=\"pull-right\" style=\"visibility: ${refreshing ? 'visible' : 'hidden'}\">\n            <img class=\"spinner\" src=\"assets/icons/spinner.svg\"/>\n          </div>\n        </div>\n      </div>\n    </div>\n\n    <!-- Data Table -->\n    <div id=\"tableContainer\" style=\"overflow-y: scroll; height:${tableHeight}px;\">\n      <table class=\"table table-striped\" aurelia-table=\"data.bind: tableData;\n        display-data.bind: $areas; api.bind: tableApi;\">\n        <thead>\n          <tr>\n            <th class=\"col-md-1\">ID</th>\n            <th class=\"col-md-3\">Name</th>\n            <th class=\"col-md-3\">City</th>\n            <th class=\"col-md-2\">Geom ID</th>\n            <th class=\"col-md-1\">Reports</th>\n            <th class=\"col-md-2\">State</th>\n          </tr>\n        </thead>\n        <tbody>\n          <tr repeat.for=\"area of $areas\" aut-select=\"row.bind: area; selected-class: info\"\n            select.delegate=\"areaSelectedInTable($event)\">\n            <td>${area.properties.area_id}</td>\n            <td>${area.properties.area_name}</td>\n            <td>${area.properties.city_name}</td>\n            <td>${area.properties.geom_id}</td>\n            <td>${area.properties.reports}</td>\n            <td>\n              <select value.bind=\"area.properties.state\" if.bind=\"isEditor && area === selectedArea\"\n                change.delegate=\"floodStateChanged(area)\">\n                <option repeat.for=\"state of floodStates\" model.bind=\"state.level\">${state.severity}</option>\n              </select>\n              <span if.bind=\"!isEditor || area !== selectedArea\">${area.properties.state | floodState}</span>\n            </td>\n          </tr>\n        </tbody>\n      </table>\n    </div>\n\n    <!-- Modal -->\n    <div class=\"modal fade\" id=\"myModal\" tabindex=\"-1\" role=\"dialog\" aria-labelledby=\"myModalLabel\">\n      <div class=\"modal-dialog\" role=\"document\">\n        <div class=\"modal-content\">\n          <div class=\"modal-header\">\n            <button type=\"button\" class=\"close\" data-dismiss=\"modal\" aria-label=\"Close\"><span aria-hidden=\"true\">&times;</span></button>\n            <h4 class=\"modal-title\" id=\"myModalLabel\"></h4>\n          </div>\n          <div class=\"modal-body\">\n        </div>\n      </div>\n    </div>\n\n  </div>\n</template>\n"; });
+define('text!home.html', ['module'], function(module) { module.exports = "<template>\n  <div class=\"no-selection text-center\">\n    <h3>Silahkan login untuk terus peta</h3>\n  </div>\n</template>\n"; });
+define('text!map.html', ['module'], function(module) { module.exports = "<template>\n\n  <require from=\"leaflet/leaflet.css\"></require>\n  <require from=\"./styles.css\"></require>\n\n  <div class=\"map\">\n\n    <!-- Error Message Box -->\n    <div if.bind=\"error\" class=\"alert alert-danger\" role=\"alert\">\n      <span class=\"sr-only\">Error:</span>\n      ${error}\n    </div>\n\n    <loading-indicator loading.bind=\"loading\"></loading-indicator>\n\n    <!-- Map -->\n    <div id=\"mapContainer\" style=\"height:${mapHeight}px;\"></div>\n\n    <div class=\"btn-toolbar\">\n      <div class=\"row\">\n        <div class=\"col-md-4 text-left\">\n          <select value.bind=\"selectedDistrict\" change.delegate=\"districtChanged(selectedDistrict)\" class=\"select-district\">\n            <option value.bind=\"null\">${!districts ? 'Loading' : 'Kelurahan'}</option>\n            <option repeat.for=\"district of districts\" value.bind=\"district\">${district}</option>\n          </select>\n          <!--<span class=\"district-flood-count\" if.bind=\"selectedDistrict\">${selectedDistrict.reports ? selectedDistrict.reports : 0} Flood ${selectedDistrict.reports === 1 ? 'Report' : 'Reports'}</span>-->\n        </div>\n        <div class=\"col-md-4 text-center\">\n          <div class=\"btn-group\">\n            <button click.delegate=\"refreshFloodStates()\" class=\"btn btn-primary\">Menyegarkan Semua Banjir</button>\n            <button click.delegate=\"clearFloodStates()\" class=\"btn btn-danger\" if.bind=\"isEditor\">Hapus Semua Banjir</button>\n          </div>\n        </div>\n        <div class=\"col-md-4 text-right\">\n          <div class=\"pull-right\" style=\"visibility: ${refreshing ? 'visible' : 'hidden'}\">\n            <img class=\"spinner\" src=\"assets/icons/spinner.svg\"/>\n          </div>\n        </div>\n      </div>\n    </div>\n\n    <!-- Data Table -->\n    <div id=\"tableContainer\" style=\"overflow-y: scroll; height:${tableHeight}px;\">\n      <table class=\"table table-striped\" aurelia-table=\"data.bind: tableData;\n        display-data.bind: $areas; api.bind: tableApi;\">\n        <thead>\n          <tr>\n            <th class=\"col-md-1\">ID</th>\n            <th class=\"col-md-3\">Nama</th>\n            <th class=\"col-md-3\">Kota</th>\n            <th class=\"col-md-2\">Geom ID</th>\n            <th class=\"col-md-1\">Laporan</th>\n            <th class=\"col-md-2\">Tidakan</th>\n          </tr>\n        </thead>\n        <tbody>\n          <tr repeat.for=\"area of $areas\" aut-select=\"row.bind: area; selected-class: info\"\n            select.delegate=\"areaSelectedInTable($event)\">\n            <td>${area.properties.area_id}</td>\n            <td>${area.properties.area_name}</td>\n            <td>${area.properties.city_name}</td>\n            <td>${area.properties.geom_id}</td>\n            <td>${area.properties.reports}</td>\n            <td>\n              <select value.bind=\"area.properties.state\" if.bind=\"isEditor && area === selectedArea\"\n                change.delegate=\"floodStateChanged(area)\">\n                <option repeat.for=\"state of floodStates\" model.bind=\"state.level\">${state.severity}</option>\n              </select>\n              <span if.bind=\"!isEditor || area !== selectedArea\">${area.properties.state | floodState}</span>\n            </td>\n          </tr>\n        </tbody>\n      </table>\n    </div>\n\n    <!-- Modal -->\n    <div class=\"modal fade\" id=\"myModal\" tabindex=\"-1\" role=\"dialog\" aria-labelledby=\"myModalLabel\">\n      <div class=\"modal-dialog\" role=\"document\">\n        <div class=\"modal-content\">\n          <div class=\"modal-header\">\n            <button type=\"button\" class=\"close\" data-dismiss=\"modal\" aria-label=\"Close\"><span aria-hidden=\"true\">&times;</span></button>\n            <h4 class=\"modal-title\" id=\"myModalLabel\"></h4>\n          </div>\n          <div class=\"modal-body\">\n        </div>\n      </div>\n    </div>\n\n  </div>\n</template>\n"; });
 //# sourceMappingURL=app-bundle.js.map

@@ -2,30 +2,32 @@ export default {
   debug: true,
   testing: true,
   dataUrl: 'http://localhost:8001',
+  AUTH0_CLIENT_ID: 'ApdfZvV1BrxXmwdg6Djrle4m2nav5ub9',
+  AUTH0_DOMAIN: 'petabencana.au.auth0.com',
   floodStates: [
     {
       level: null,
-      severity: 'Clear',
+      severity: 'Ada banjir',
       levelDescription: 'NO FLOODING'
     },
     {
       level: 1,
-      severity: 'Unknown',
+      severity: 'Hati-hati!',
       levelDescription: 'AN UNKNOWN LEVEL OF FLOODING - USE CAUTION -'
     },
     {
       level: 2,
-      severity: 'Minor',
+      severity: '10 cm - 70 cm',
       levelDescription: 'FLOODING OF BETWEEN 10 and 70 CENTIMETERS'
     },
     {
       level: 3,
-      severity: 'Moderate',
+      severity: '71 cm - 150 cm',
       levelDescription: 'FLOODING OF BETWEEN 71 and 150 CENTIMETERS'
     },
     {
       level: 4,
-      severity: 'Severe',
+      severity: '> 150 cm',
       levelDescription: 'FLOODING OF OVER 150 CENTIMETERS'
     }
   ],

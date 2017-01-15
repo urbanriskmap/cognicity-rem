@@ -12,8 +12,8 @@
       </div>
       <div class="navbar-collapse collapse">
         <ul if.bind="isAuthenticated" class="nav navbar-nav navbar-right">
-          <li><a>User: ${username}</a></li>
-          <li><a route-href="route: map">Map</a></li>
+          <li><a>Pemakai: ${username}</a></li>
+          <li><a route-href="route: map">Peta</a></li>
           <li><a href="#" click.delegate="logout()"><span t="logout" /></a></li>
         </ul>
         <ul if.bind="!isAuthenticated" class="nav navbar-nav navbar-right">

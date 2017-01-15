@@ -5,11 +5,12 @@ import { API } from './api';
 import { tokenIsExpired, getProfile } from './utils';
 import { Router } from 'aurelia-router';
 
-// TODO: Move into environment variables
+// Import environment variables
+import env from './environment';
+
 // TODO: Check credentials and log an error if incorrect
-// const AUTH0_CLIENT_ID = 'REPLACE_WITH_ACTUAL_CLIENT_ID';
-const AUTH0_CLIENT_ID = 'ApdfZvV1BrxXmwdg6Djrle4m2nav5ub9';
-const AUTH0_DOMAIN = 'petabencana.au.auth0.com';
+const AUTH0_CLIENT_ID = env.AUTH0_CLIENT_ID;
+const AUTH0_DOMAIN = env.AUTH0_DOMAIN;
 
 // Check credentials are supplied otherwise throw error
 if (!AUTH0_CLIENT_ID || !AUTH0_DOMAIN) throw new Error('Auth0 credentials are required');

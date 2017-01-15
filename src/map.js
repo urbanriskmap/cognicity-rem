@@ -67,7 +67,7 @@ export class Map {
       },
       onAdd: function(map) {
         var container = L.DomUtil.create('div', 'info legend');
-	       container.innerHTML += '<div id="heightsLegend"><div class="sublegend"><div style="font-weight:bold">Tinggi Banjir</div><div><i class="color" style="background:#CC2A41;"></i><span>&nbsp;&gt; 150 cm</span></div><div><i class="color" style="background:#FF8300"></i><span>&nbsp;71 cm &ndash; 150 cm </span></div><div><i class="color" style="background:#FFFF00"></i><span>&nbsp;10 cm &ndash; 70 cm</span></div><i class="color" style="background:#A0A9F7"></i><span>&nbsp;RWs</span></div></div>';
+	       container.innerHTML += '<div id="heightsLegend"><div class="sublegend"><div style="font-weight:bold">Tinggi Banjir</div><div><i class="color" style="background:#CC2A41;"></i><span>&nbsp;&gt; 150 cm</span></div><div><i class="color" style="background:#FF8300"></i><span>&nbsp;71 cm &ndash; 150 cm </span></div><div><i class="color" style="background:#FFFF00"></i><span>&nbsp;10 cm &ndash; 70 cm</span></div><i class="color" style="background:#A0A9F7"></i><span>&nbsp;Hati-hati!</span></div></div>';
          return container;
       }
     });
@@ -195,7 +195,6 @@ export class Map {
       onEachFeature: (feature, layer) => {
         layer.on({
           click: (e) => {
-            console.log(feature.properties.image_url);
             this.map.setView(e.target._latlng, 15);
             $('#myModal .modal-title').html(feature.properties.title || 'Banjir laporkan');
             $('#myModal .modal-body').html(feature.properties.text);
@@ -245,7 +244,7 @@ export class Map {
     Promise.all(layerPromises).then(() => {
       L.control.layers(basemapLayers, infrastructureLayers, {
         position: 'bottomleft',
-        collapsed: false
+        collapsed: true
       }).addTo(this.map);
       this.loading = false;
     }).catch((err) => {
@@ -289,9 +288,7 @@ export class Map {
     this.api.getFloodStates().then((data) => {
 
       // Clear the map layer
-
       this.floodLayer.clearLayers();
-
 
       // Check whether updates available from server
       let update = false;
@@ -409,7 +406,7 @@ export class Map {
 
     // Make sure the user really wants to clear all flood states
     // TODO: Replace with a nicer dialog e.g. https://github.com/aurelia/dialog
-    let ok = confirm('Are you sure you want to clear all flood states?');
+    let ok = confirm('Apakah Anda yakin ingin menghapus semua banjir?');
     if (!ok) return;
 
     // Filter out the flooded states

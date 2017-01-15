@@ -1,7 +1,7 @@
 export default {
   debug: true,
   testing: true,
-  dataUrl: 'https://data-dev.petabencana.id',
+  dataUrl: 'http://localhost:8001',
   floodStates: [
     {
       level: null,

@@ -145,7 +145,7 @@ export class Map {
               });
 
               // Zoom to a given feature
-              this.map.fitBounds(e.target.getBounds(), {maxZoom:14});
+              this.map.fitBounds(e.target.getBounds(), {maxZoom:15});
 
               // Update the selected area and selected district
               this.selectedArea = this.floods.features.find((flood) =>
@@ -183,14 +183,29 @@ export class Map {
 
     // Create flood reports layer and add to the map
     this.reportsLayer = L.geoJSON(null, {
-      pointToLayer: (feature, latlng) =>
-      L.marker(latlng, {
-        icon: L.icon({
-          iconUrl: `assets/icons/floodsIcon.svg`,
-          iconSize: [30, 30],
-          iconAnchor: [15, 15]
-        })
-      })
+      pointToLayer: (feature, latlng) => {
+        return L.marker(latlng, {
+                icon: L.icon({
+                  iconUrl: `assets/icons/floodsIcon.svg`,
+                  iconSize: [30, 30],
+                  iconAnchor: [15, 15]
+                })
+              })
+      },
+      onEachFeature: (feature, layer) => {
+        layer.on({
+          click: (e) => {
+            console.log(feature.properties.image_url);
+            this.map.setView(e.target._latlng, 15);
+            $('#myModal .modal-title').html(feature.properties.title || 'Banjir laporkan');
+            $('#myModal .modal-body').html(feature.properties.text);
+            if (feature.properties.image_url){
+              $('#myModal .modal-body').append("<div><img src='" + feature.properties.image_url + "' width=300px></div>");
+            }
+            $('#myModal').modal();
+          }
+        });
+      }
     });
     this.reportsLayer.addTo(this.map);
 

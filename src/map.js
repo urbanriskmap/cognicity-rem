@@ -518,9 +518,10 @@ export class Map {
         // Refresh the flood states
         this.refreshFloodStates();
 
+        // TODO determine if this is still needed, now that refreshFloodStates does a full reload
         // Fire a click event on selected polygon to update its symbology
         // This speeds up UI feedback for the user
-        this.currentFeature.target.fire('click');
+        //this.currentFeature.target.fire('click');
 
       })
       .catch((err) => {

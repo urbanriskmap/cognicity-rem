@@ -25,6 +25,8 @@ export class App {
   isAuthenticated = false;
   isEditor = false;
   username = null;
+  loginToggled = false;
+  landingMessage = "Silahkan login untuk terus peta"
 
   constructor(api, i18n, router) {
     this.api = api;
@@ -53,16 +55,23 @@ export class App {
           // Handle error
           return;
         }
+        self.loginToggled = true;
+        self.landingMessage = 'loading...';
         localStorage.setItem('id_token', authResult.idToken);
         localStorage.setItem('profile', JSON.stringify(profile));
         self.isEditor = profile.app_metadata && profile.app_metadata.role === 'editor';
         self.username = profile.email;
         self.isAuthenticated = true;
         self.lock.hide();
+        self.loginToggled = false;
         // Redirect to the map view
-        this.router.navigate('map');
+        this.router.navigate('map').then(function(){self.landingMessage = 'Silahkan login untuk terus peta'});
       });
     });
+  }
+
+  activate(){
+    this.login();
   }
 
   configureRouter(config, router) {
@@ -77,13 +86,17 @@ export class App {
   }
 
   login() {
-    this.lock.show();
+    if (this.loginToggled === false) {
+      self.loginToggled = true;
+      this.lock.show();
+    }
   }
 
   logout() {
     localStorage.removeItem('profile');
     localStorage.removeItem('id_token');
     this.isAuthenticated = false;
+    self.loginToggled = false;
     // Redirect to the home view
     this.router.navigate('');
   }

@@ -7,6 +7,5 @@ export class Home {
   constructor(app) {
     this.message = 'Welcome Home';
     this.app = app;
-    this.app.login();
   }
 }

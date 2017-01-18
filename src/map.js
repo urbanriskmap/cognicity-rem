@@ -216,12 +216,25 @@ export class Map {
     });
     this.reportsLayer.addTo(this.map);
 
+    this.gaugeIcons = function(level){
+    	switch (level) {
+    		case 1:
+    			return {'color':'#FF4000','icon':'assets/icons/floodgauge_1.png'};
+    		case 2:
+    			return {'color':'#FF8000','icon':'assets/icons/floodgauge_2.png'};
+    		case 3:
+    			return {'color':'#F7D358','icon':'assets/icons/floodgauge_3.png'};
+    		default:
+    			return {'color':'#01DF01','icon':'assets/icons/floodgauge.png'};
+    	}
+    };
+
     // Create flood gauge layer and add to the map
     this.gaugeLayer = L.geoJSON(null, {
       pointToLayer: (feature, latlng) => {
         return L.marker(latlng, {
                 icon: L.icon({
-                  iconUrl: `assets/icons/floodgauge.png`,
+                  iconUrl: this.gaugeIcons(feature.properties.observations[feature.properties.observations.length-1].f3).icon,
                   iconSize: [22,22],
     							iconAnchor: [11, 11],
     							popupAnchor: [0, 0]
@@ -238,7 +251,7 @@ export class Map {
   					var data = {
   						labels : [],
   						datasets : [{
-  							label: "Tinggi muka air (cm)",
+  							label: "Tinggi Muka Air (cm)",
   							backgroundColor: "rgba(151,187,205,0.2)",
   							borderColor: "rgba(151,187,205,1)",
   							pointBackgroundColor: "rgba(151,187,205,1)",

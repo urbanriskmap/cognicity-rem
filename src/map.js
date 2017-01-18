@@ -186,11 +186,9 @@ export class Map {
 
       // Refresh flood reports layer then schedule to update automatically
       this.refreshFloodReports();
-      setTimeout(() => this.refreshFloodReports(), config.reports_refresh);
 
       // Refresh flood gauges layer then schedule to update automatically
       this.refreshFloodGauges();
-      setTimeout(() => this.refreshFloodGauges(), config.gauges_refresh);
 
       // Updated refreshing status
       this.refreshing = false;
@@ -437,6 +435,7 @@ export class Map {
 
   // Refresh flood reports
   refreshFloodReports() {
+    console.log('refresh flood reports called');
     // Start the spinner
     this.refreshing = true;
 
@@ -453,11 +452,16 @@ export class Map {
 
       // Stop the spinner
       this.refreshing = false;
+
+      // Iterate
+      setTimeout(() => this.refreshFloodReports(), config.reports_refresh);
+
     });
   }
 
   // Refresh flood reports
   refreshFloodGauges() {
+    console.log('refresh flood gauges called');
     // Start the spinner
     this.refreshing = true;
 
@@ -468,6 +472,10 @@ export class Map {
 
       // Stop the spinner
       this.refreshing = false;
+
+      // Iterate
+      setTimeout(() => this.refreshFloodGauges(), config.gauges_refresh);
+
     });
   }
 
@@ -517,11 +525,6 @@ export class Map {
 
         // Refresh the flood states
         this.refreshFloodStates();
-
-        // TODO determine if this is still needed, now that refreshFloodStates does a full reload
-        // Fire a click event on selected polygon to update its symbology
-        // This speeds up UI feedback for the user
-        //this.currentFeature.target.fire('click');
 
       })
       .catch((err) => {

@@ -26,7 +26,7 @@ export class App {
   isEditor = false;
   username = null;
   loginToggled = false;
-  landingMessage = "Silahkan login untuk terus peta"
+  landingMessage = "Silakan login untuk mengakses peta"
 
   constructor(api, i18n, router) {
     this.api = api;
@@ -66,7 +66,7 @@ export class App {
         self.lock.hide();
         // Redirect to the map view
         this.router.navigate('map');
-        self.landingMessage = 'Silahkan login untuk terus peta';
+        self.landingMessage = 'Silakan login untuk mengakses peta';
       });
     });
   }

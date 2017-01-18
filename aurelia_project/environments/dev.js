@@ -7,7 +7,7 @@ export default {
   floodStates: [
     {
       level: null,
-      severity: 'Ada banjir',
+      severity: 'Tidak banjir',
       levelDescription: 'NO FLOODING'
     },
     {
@@ -65,7 +65,7 @@ export default {
       },
       {
         type: 'waterways',
-        name: 'Jaringan air',
+        name: 'Jaringan kanal',
         default: false
       }
     ],

@@ -231,13 +231,14 @@ export class Map {
       onEachFeature: (feature, layer) => {
         layer.on({
           click: (e) => {
+            $('#myModal .modal-title').html(feature.properties.gaugenameid)
             $('#myModal .modal-body').html('<canvas id="modalChart" width="400" height="200"></canvas>');
             var ctx = $('#modalChart').get(0).getContext("2d");
 
   					var data = {
   						labels : [],
   						datasets : [{
-  							label: "",
+  							label: "Tinggi muka air (cm)",
   							backgroundColor: "rgba(151,187,205,0.2)",
   							borderColor: "rgba(151,187,205,1)",
   							pointBackgroundColor: "rgba(151,187,205,1)",
@@ -255,7 +256,7 @@ export class Map {
   					data:data,
   					options: {
               bezierCurve:true,
-              legend: {display:false},
+              legend: {display:true},
               scaleLabel: "<%= ' ' + value%>",
               scales: {
                 xAxes: [{
@@ -276,6 +277,9 @@ export class Map {
                       }
                     }
                   }]
+                },
+                tooltips:{
+                  enabled: false
                 }
   						}
   					});

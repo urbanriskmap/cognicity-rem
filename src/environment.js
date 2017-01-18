@@ -33,8 +33,8 @@ export default {
   ],
   mapConfig: {
     region: 'jbd',
-    reports_refresh: 1000, // Reports will refresh every 60 seconds
-    gauges_refresh: 1000, // Gauges will refresh every 15 minutes
+    reports_refresh: 60000, // Reports will refresh every 60 seconds
+    gauges_refresh: 900000, // Gauges will refresh every 15 minutes
     bounds: {
       sw: [-6.733, 106.480],
       ne: [-5.880, 107.175]

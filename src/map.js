@@ -435,7 +435,6 @@ export class Map {
 
   // Refresh flood reports
   refreshFloodReports() {
-    console.log('refresh flood reports called');
     // Start the spinner
     this.refreshing = true;
 
@@ -461,7 +460,6 @@ export class Map {
 
   // Refresh flood reports
   refreshFloodGauges() {
-    console.log('refresh flood gauges called');
     // Start the spinner
     this.refreshing = true;
 

@@ -3,6 +3,7 @@ import { Redirect } from 'aurelia-router';
 import { I18N } from 'aurelia-i18n';
 
 import * as L from 'leaflet';
+import Chart from 'chartjs';
 
 import { API } from './api';
 import { tokenIsExpired, getProfile } from './utils';
@@ -32,7 +33,6 @@ export class Map {
 
   @bindable({ defaultBindingMode: bindingMode.twoWay }) selectedDistrict;
 
-
   constructor(api, i18n) {
     this.api = api;
     this.i18n = i18n;
@@ -59,8 +59,12 @@ export class Map {
       attributionControl: false
     }).fitBounds([config.bounds.sw, config.bounds.ne]);
 
+    // Scale
     L.control.scale({position:'bottomright', metric:true, imperial:false}).addTo(this.map);
 
+    // Legend
+    // TODO - flood gauges
+    // TODO - flood reports
     var mapKey = L.Control.extend({
       options: {
         position:'bottomright'
@@ -71,7 +75,6 @@ export class Map {
          return container;
       }
     });
-
     this.map.addControl(new mapKey);
 
     // Add basemaps
@@ -173,6 +176,10 @@ export class Map {
       this.refreshFloodReports();
       setTimeout(() => this.refreshFloodReports(), config.reports_refresh);
 
+      // Refresh flood gauges layer then schedule to update automatically
+      this.refreshFloodGauges();
+      setTimeout(() => this.refreshFloodGauges(), config.gauges_refresh);
+
       // Updated refreshing status
       this.refreshing = false;
     })
@@ -197,9 +204,10 @@ export class Map {
           click: (e) => {
             this.map.setView(e.target._latlng, 15);
             $('#myModal .modal-title').html(feature.properties.title || 'Banjir laporkan');
-            $('#myModal .modal-body').html(feature.properties.text);
+            $('#myModal .modal-body').html('<div id="modalContent"></div>');
+            $('#modalContent').append(feature.properties.text);
             if (feature.properties.image_url){
-              $('#myModal .modal-body').append("<div><img src='" + feature.properties.image_url + "' width=300px></div>");
+              $('#modalContent').append("<div><img src='" + feature.properties.image_url + "' width=300px></div>");
             }
             $('#myModal').modal();
           }
@@ -207,6 +215,75 @@ export class Map {
       }
     });
     this.reportsLayer.addTo(this.map);
+
+    // Create flood gauge layer and add to the map
+    this.gaugeLayer = L.geoJSON(null, {
+      pointToLayer: (feature, latlng) => {
+        return L.marker(latlng, {
+                icon: L.icon({
+                  iconUrl: `assets/icons/floodgauge.png`,
+                  iconSize: [22,22],
+    							iconAnchor: [11, 11],
+    							popupAnchor: [0, 0]
+                })
+              })
+      },
+      onEachFeature: (feature, layer) => {
+        layer.on({
+          click: (e) => {
+            $('#myModal .modal-body').html('<canvas id="modalChart" width="400" height="200"></canvas>');
+            var ctx = $('#modalChart').get(0).getContext("2d");
+
+  					var data = {
+  						labels : [],
+  						datasets : [{
+  							label: "",
+  							backgroundColor: "rgba(151,187,205,0.2)",
+  							borderColor: "rgba(151,187,205,1)",
+  							pointBackgroundColor: "rgba(151,187,205,1)",
+  							pointBorderColor: "#fff",
+  	            pointRadius: 4,
+  							data: [1,2,3]
+  						}]
+  					};
+  					for (var i = 0; i < feature.properties.observations.length; i++){
+  						data.labels.push(feature.properties.observations[i].f1);
+  						data.datasets[0].data.push(feature.properties.observations[i].f2);
+  					}
+  					var gaugeChart = new Chart(ctx,
+  					{type: 'line',
+  					data:data,
+  					options: {
+              bezierCurve:true,
+              legend: {display:false},
+              scaleLabel: "<%= ' ' + value%>",
+              scales: {
+                xAxes: [{
+                  type: 'time',
+                  time: {
+                    unit: 'hour',
+                    unitStepSize: 1,
+                    displayFormats: {
+                      'millisecond': 'HH:mm',
+              				'second': 'HH:mm',
+											'minute': 'HH:mm',
+											'hour': 'HH:mm',
+											'day': 'HH:mm',
+											'week': 'HH:mm',
+											'month': 'HH:mm',
+											'quarter': 'HH:mm',
+											'year': 'HH:mm'
+                      }
+                    }
+                  }]
+                }
+  						}
+  					});
+            $('#myModal').modal();
+          }
+        });
+      }
+    }).addTo(this.map);
 
     // Add infrastructure layers
     let infrastructureLayers = {};
@@ -340,6 +417,21 @@ export class Map {
 
       // Assign new report counts
       this.assignReportCounts(data);
+
+      // Stop the spinner
+      this.refreshing = false;
+    });
+  }
+
+  // Refresh flood reports
+  refreshFloodGauges() {
+    // Start the spinner
+    this.refreshing = true;
+
+    this.api.getFloodgauges().then((data) => {
+      // Refresh the reports map layer
+      this.gaugeLayer.clearLayers();
+      this.gaugeLayer.addData(data);
 
       // Stop the spinner
       this.refreshing = false;

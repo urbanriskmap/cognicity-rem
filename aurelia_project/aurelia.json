@@ -194,6 +194,11 @@
             "name": "topojson-client",
             "path": "../node_modules/topojson-client/dist",
             "main": "topojson-client"
+          },
+          {
+            "name": "chartjs",
+            "path": "../node_modules/chart.js/dist",
+            "main": "Chart.bundle.js"
           }
         ]
       }

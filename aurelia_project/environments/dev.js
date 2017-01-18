@@ -65,7 +65,7 @@ export default {
       },
       {
         type: 'waterways',
-        name: 'Jalan air',
+        name: 'Jaringan air',
         default: false
       }
     ],

@@ -27,7 +27,7 @@
         </div>
         <div class="col-md-4 text-center">
           <div class="btn-group">
-            <button click.delegate="refreshFloodStates()" class="btn btn-primary">Menyegarkan Semua Banjir</button>
+            <button click.delegate="refreshFloodStates()" class="btn btn-primary">Perbarui semua banjir</button>
             <button click.delegate="clearFloodStates()" class="btn btn-danger" if.bind="isEditor">Hapus Semua Banjir</button>
           </div>
         </div>
@@ -47,10 +47,9 @@
           <tr>
             <th class="col-md-1">ID</th>
             <th class="col-md-3">Nama</th>
-            <th class="col-md-3">Kota</th>
-            <th class="col-md-2">Geom ID</th>
-            <th class="col-md-1">Laporan</th>
-            <th class="col-md-2">Tidakan</th>
+            <th class="col-md-3">Geom ID</th>
+            <th class="col-md-2">Laporan</th>
+            <th class="col-md-3">Tindakan</th>
           </tr>
         </thead>
         <tbody>
@@ -58,7 +57,6 @@
             select.delegate="areaSelectedInTable($event)">
             <td>${area.properties.area_id}</td>
             <td>${area.properties.area_name}</td>
-            <td>${area.properties.city_name}</td>
             <td>${area.properties.geom_id}</td>
             <td>${area.properties.reports}</td>
             <td>

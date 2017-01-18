@@ -276,6 +276,11 @@ export class Map {
         return 1;
         return 0;
       });
+    let targetArea = this.tableData[0].properties.area_id;
+    let layer = this.floodLayer.getLayer(this.floodDict[targetArea]._leaflet_id);
+    this.map.fitBounds(layer.getBounds(),{maxZoom: 13});
+
+    //this.map.fitBounds(this.tableData[0].geometry)
   }
 
   // Refresh the current flood states

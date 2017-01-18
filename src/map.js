@@ -145,7 +145,7 @@ export class Map {
               });
 
               // Zoom to a given feature
-              this.map.fitBounds(e.target.getBounds(), {maxZoom:15});
+              this.map.fitBounds(e.target.getBounds(), {maxZoom:14});
 
               // Update the selected area and selected district
               this.selectedArea = this.floods.features.find((flood) =>
@@ -278,7 +278,7 @@ export class Map {
       });
     let targetArea = this.tableData[0].properties.area_id;
     let layer = this.floodLayer.getLayer(this.floodDict[targetArea]._leaflet_id);
-    this.map.fitBounds(layer.getBounds(),{maxZoom: 13});
+    this.map.fitBounds(layer.getBounds(),{maxZoom: 14});
 
     //this.map.fitBounds(this.tableData[0].geometry)
   }

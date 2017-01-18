@@ -63,7 +63,6 @@ export class Map {
     L.control.scale({position:'bottomright', metric:true, imperial:false}).addTo(this.map);
 
     // Legend
-    // TODO - flood reports
     var mapKey = L.Control.extend({
       options: {
         position:'bottomright'
@@ -72,7 +71,7 @@ export class Map {
         var container = L.DomUtil.create('div', 'info legend');
 
         // reports
-        container.innerHTML += '<div id="reportsLegend"><div class="sublegend"><div><img src="assets/icons/floodsIcon.svg" height="18px;" width="auto" /><span>&nbsp; Laporan Banjir</span></div></div></div>'
+        container.innerHTML += '<div id="reportsLegend"><div class="sublegend"><div><img src="assets/icons/floodsIcon.svg" height="22px;" width="auto" /><span>&nbsp; Laporan Banjir</span></div></div></div>'
 
         // flood extents
 	      container.innerHTML += '<div id="heightsLegend"><div class="sublegend"><div style="font-weight:bold">Tinggi Banjir</div><div><i class="color" style="background:#CC2A41;"></i><span>&nbsp;&gt; 150 cm</span></div><div><i class="color" style="background:#FF8300"></i><span>&nbsp;71 cm &ndash; 150 cm </span></div><div><i class="color" style="background:#FFFF00"></i><span>&nbsp;10 cm &ndash; 70 cm</span></div><i class="color" style="background:#A0A9F7"></i><span>&nbsp;Hati-hati</span></div></div>';
@@ -222,6 +221,9 @@ export class Map {
             if (feature.properties.image_url){
               $('#modalContent').append("<div><img src='" + feature.properties.image_url + "' width=300px></div>");
             }
+            let ts = new Date(feature.properties.created_at);
+            $('#myModal .modal-footer').html(ts.toLocaleDateString('id', {timeZone:
+          'Asia/Jakarta'}) + " " + ts.toLocaleTimeString('en', { hour12: false, timeZone: 'Asia/Jakarta'}));
             $('#myModal').modal();
           }
         });
@@ -259,6 +261,7 @@ export class Map {
           click: (e) => {
             $('#myModal .modal-title').html(feature.properties.gaugenameid)
             $('#myModal .modal-body').html('<canvas id="modalChart" width="400" height="200"></canvas>');
+            $('#myModal .modal-footer').empty();
             var ctx = $('#modalChart').get(0).getContext("2d");
 
   					var data = {

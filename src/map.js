@@ -63,7 +63,6 @@ export class Map {
     L.control.scale({position:'bottomright', metric:true, imperial:false}).addTo(this.map);
 
     // Legend
-    // TODO - flood gauges
     // TODO - flood reports
     var mapKey = L.Control.extend({
       options: {
@@ -71,8 +70,22 @@ export class Map {
       },
       onAdd: function(map) {
         var container = L.DomUtil.create('div', 'info legend');
-	       container.innerHTML += '<div id="heightsLegend"><div class="sublegend"><div style="font-weight:bold">Tinggi Banjir</div><div><i class="color" style="background:#CC2A41;"></i><span>&nbsp;&gt; 150 cm</span></div><div><i class="color" style="background:#FF8300"></i><span>&nbsp;71 cm &ndash; 150 cm </span></div><div><i class="color" style="background:#FFFF00"></i><span>&nbsp;10 cm &ndash; 70 cm</span></div><i class="color" style="background:#A0A9F7"></i><span>&nbsp;Hati-hati!</span></div></div>';
-         return container;
+
+        // reports
+        container.innerHTML += '<div id="reportsLegend"><div class="sublegend"><div><img src="assets/icons/floodsIcon.svg" height="18px;" width="auto" /><span>&nbsp; Laporan Banjir</span></div></div></div>'
+
+        // flood extents
+	      container.innerHTML += '<div id="heightsLegend"><div class="sublegend"><div style="font-weight:bold">Tinggi Banjir</div><div><i class="color" style="background:#CC2A41;"></i><span>&nbsp;&gt; 150 cm</span></div><div><i class="color" style="background:#FF8300"></i><span>&nbsp;71 cm &ndash; 150 cm </span></div><div><i class="color" style="background:#FFFF00"></i><span>&nbsp;10 cm &ndash; 70 cm</span></div><i class="color" style="background:#A0A9F7"></i><span>&nbsp;Hati-hati</span></div></div>';
+
+        // gauges
+        let gaugeLevelNames = {};
+        gaugeLevelNames[1] = 'Siaga I';
+        gaugeLevelNames[2] = 'Siaga II';
+        gaugeLevelNames[3] = 'Siaga III';
+        gaugeLevelNames[4] = 'Siaga IV';
+        container.innerHTML += '<div id="gaugesLegend"><div class="sublegend"><div style="font-weight:bold">Tinggi Muka Air</div><div><img src="assets/icons/floodgauge_1.png" height="18px;" width="auto" /><span>&nbsp;'+gaugeLevelNames[1]+'</span></div><div><img src="assets/icons/floodgauge_2.png" height="18px;" width="auto" /><span>&nbsp;'+gaugeLevelNames[2]+'</span></div><div><img src="assets/icons/floodgauge_3.png" height="18px;" width="auto" /><span>&nbsp;'+gaugeLevelNames[3]+'</span></div><div><img src="assets/icons/floodgauge.png" height="18px;" width="auto" /><span>&nbsp;'+gaugeLevelNames[4]+'</span></div></div>';
+
+        return container;
       }
     });
     this.map.addControl(new mapKey);

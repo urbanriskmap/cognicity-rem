@@ -1,7 +1,7 @@
 export default {
   debug: true,
   testing: true,
-  dataUrl: 'https://data-dev.petabencana.id',
+  dataUrl: 'http://localhost:8001',
   AUTH0_CLIENT_ID: 'ApdfZvV1BrxXmwdg6Djrle4m2nav5ub9',
   AUTH0_DOMAIN: 'petabencana.au.auth0.com',
   floodStates: [

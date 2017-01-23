@@ -7,6 +7,7 @@ import Chart from 'chartjs';
 
 import { API } from './api';
 import { tokenIsExpired, getProfile } from './utils';
+import { loadTable } from './reports';
 
 // Import environment variables
 import env from './environment';
@@ -44,6 +45,7 @@ export class Map {
     this.selectedDistrict = null;
     this.selectedArea = null;
     this.floodStates = env.floodStates;
+    this.loadTable = loadTable;
 
     // TODO: Improve this, it is a little hacky and does not take into account user reszing their browser
     // Map height should be a 1/3 of usable screen space (less header)
@@ -73,6 +75,24 @@ export class Map {
 
     // Scale
     L.control.scale({position:'bottomright', metric:true, imperial:false}).addTo(this.map);
+
+    // Reports table
+    let reportsControl = L.Control.extend({
+      options: {
+        position:'bottomleft'
+      },
+      onAdd: function(map) {
+
+        let div = L.DomUtil.create('div', 'leaflet-control-reports-button');
+        div.setAttribute('data-toggle', 'modal');
+        div.setAttribute('href', '#reportsModal');
+
+        window.reportsBadge = L.DomUtil.create('span', 'badge progress-bar-danger', div);
+        return div;
+      }
+    });
+
+    this.map.addControl(new reportsControl);
 
     // Legend
     var mapKey = L.Control.extend({
@@ -210,6 +230,8 @@ export class Map {
       this.refreshing = false;
     });
 
+    this.reportsLayerFeatureMap = {};
+
     // Create flood reports layer and add to the map
     this.reportsLayer = L.geoJSON(null, {
       pointToLayer: (feature, latlng) => {
@@ -222,6 +244,7 @@ export class Map {
               })
       },
       onEachFeature: (feature, layer) => {
+        this.reportsLayerFeatureMap[feature.properties.pkey] = layer;
         layer.on({
           click: (e) => {
             this.map.setView(e.target._latlng, 15);
@@ -449,9 +472,13 @@ export class Map {
     this.refreshing = true;
 
     this.api.getReports().then((data) => {
+
       // Refresh the reports map layer
       this.reportsLayer.clearLayers();
       this.reportsLayer.addData(data);
+
+      this.loadTable(data);
+      window.reportsBadge.innerHTML = data.features.length;
 
       // Initialise report counts
       this.initReportCounts();

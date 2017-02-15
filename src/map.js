@@ -304,7 +304,7 @@ export class Map {
   							pointBackgroundColor: "rgba(151,187,205,1)",
   							pointBorderColor: "#fff",
   	            pointRadius: 4,
-  							data: [1,2,3]
+  							data: []
   						}]
   					};
   					for (var i = 0; i < feature.properties.observations.length; i++){

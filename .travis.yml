@@ -16,6 +16,12 @@ notifications:
     on_failure: always  # options: [always|never|change] default: always
     on_start: always     # options: [always|never|change] default: always
 
+addons:
+  browserstack:
+    username:abrahamquintero1
+    access_key:
+      secure: "D9lndwC7Xf2m6X/nP1k0vffY97ww00sGP2cYnpRCAiGN/9eZzdgTTs6QPOv5vOh6Bo4dLfUL69r4yzimDgEcZEtU+NJjqa2/7BTZioRqopQKB6Uo3ZtnP0dEHfaz5OxEHX8TOR6ZRNf/NWTyVdX+Ajw20QYgZAiXo6RSXx/7ALaG4oj26Ud9JJqJbgVf4jlHRuXKf1gRKDmvP2Im+Su0Xh5Fhza3qY/6/9asFVC6RZlcPaX6wXerTZXggakaH4sTaMXImDKiFg925uYof4DF/HB//LqeUXXSm5AEjWtHtUiy0zmTenXkWZsNfdPvK7j4pR9bQgMyAnl1uuMhxPdi89q8dalOw9E0UH8rkurI9TRa4izlLVHNwvXAySq3CceaZtBMtRGhTfcKSqtjI7vBxpYZumARp/aqqG8PxUjurTAVdsZTuSoiMeMmL114b8mJJjfhP4ejS+u1mLHlZis+CJ/MXi8JnvvrDqsY1qN8t5hudS/15LEX3N2cBCtmMRIEmTjaHpq2xvVxmln3ncc+5OTJ4r9OR/Mk+8Th6JBmwyriwkIApRFEgaJoOdz0AVhxWfCNIcrlTxhCENsJXD+n+IP3yAQZBOC8T4WislWj2yoq0Owdr+V+qZTvG3xdnvKjrpRZcPj7842dUaAthx5YE8cyged/xbGT5fB8mLjBZ2M="
+
 install:
   - npm install
   - npm install aurelia-cli -g

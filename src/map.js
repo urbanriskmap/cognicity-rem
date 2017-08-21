@@ -248,7 +248,7 @@ export class Map {
         layer.on({
           click: (e) => {
             this.map.setView(e.target._latlng, 15);
-            $('#myModal .modal-title').html(feature.properties.title || 'Banjir laporkan');
+            $('#myModal .modal-title').html(feature.properties.title || 'Laporan banjir');
             $('#myModal .modal-body').html('<div id="modalContent"></div>');
             $('#modalContent').append(feature.properties.text);
             if (feature.properties.image_url){

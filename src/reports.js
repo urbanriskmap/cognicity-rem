@@ -38,7 +38,7 @@ export function loadTable(reports) {
 			rows += '<td><a data-dismiss="modal" href="map" onclick="window.centreMapOnPopup('+report.pkey+')")>'+text+'</a></td>'; // Message
 		rows += '</tr>';
 	}
-	thead = '<table class="table table-hover"><thead><tr><th class="col-xs-2">Waktu</th><th class="col-xs-6">Laporkan</th></tr></thead>';
+	thead = '<table class="table table-hover"><thead><tr><th class="col-xs-2">Waktu</th><th class="col-xs-6">Laporan</th></tr></thead>';
 
 	var tbody = '<tbody>'+rows+'</tbody></table>';
 	$("#reportsModal .modal-body").append(thead+tbody);

@@ -34,11 +34,10 @@ export class App {
     let self = this;
 
     // If the token has expired log the user out
-    // if (tokenIsExpired()) {
-    if (true) {
-      this.isAuthenticated = true;
-      this.isEditor = true;
-      this.username = 'null';
+    if (tokenIsExpired()) {
+      this.isAuthenticated = false;
+      this.isEditor = false;
+      this.username = null;
     } else {
       this.isAuthenticated = true;
       let profile = getProfile();
@@ -81,8 +80,7 @@ export class App {
   }
 
   login() {
-    this.router.navigate('map');
-    // this.lock.show();
+    this.lock.show();
   }
 
   logout() {

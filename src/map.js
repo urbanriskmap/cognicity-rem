@@ -429,7 +429,7 @@ export class Map {
   // Can this view be activated i.e. is there a valid token?
   canActivate() {
     // Check if token is expired and redirect if so
-    // if (tokenIsExpired()) return new Redirect('/');
+    if (tokenIsExpired()) return new Redirect('/');
     return true;
   }
 

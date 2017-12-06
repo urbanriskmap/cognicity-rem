@@ -1,6 +1,5 @@
 import { inject } from 'aurelia-framework';
 import { I18N } from 'aurelia-i18n';
-
 import { API } from './api';
 import { tokenIsExpired, getProfile } from './utils';
 import { Router } from 'aurelia-router';
@@ -26,7 +25,7 @@ export class App {
   isEditor = false;
   username = null;
   loginToggled = false;
-  landingMessage = "Silakan login untuk mengakses peta"
+  landingMessage = 'Silakan login untuk mengakses peta';
 
   constructor(api, i18n, router) {
     this.api = api;
@@ -48,11 +47,9 @@ export class App {
       }
     }
 
-
-
     // Once authenticated save the id_token and profile to local storage
     this.lock.on('authenticated', (authResult) => {
-      self.landingMessage = 'loading...'
+      self.landingMessage = 'loading...';
       self.lock.getProfile(authResult.idToken, (error, profile) => {
         if (error) {
           // Handle error
@@ -83,7 +80,7 @@ export class App {
   }
 
   login() {
-      this.lock.show();
+    this.lock.show();
   }
 
   logout() {

@@ -27,7 +27,7 @@ const highlightFeature = (e) => {
   if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
     layer.bringToFront();
   }
-}
+};
 
 @inject(API, I18N)
 export class Map {
@@ -46,15 +46,52 @@ export class Map {
     this.selectedArea = null;
     this.floodStates = env.floodStates;
     this.loadTable = loadTable;
+    this.mapHeight = 800; // Set a default height
+    this.pageSize = 4;
+  }
 
-    // TODO: Improve this, it is a little hacky and does not take into account user reszing their browser
-    // Map height should be a 1/3 of usable screen space (less header)
-    this.mapHeight = ( window.innerHeight * 0.66 ) - 100;
-    // Table height should be half the map height
-    this.tableHeight = this.mapHeight * 0.5;
-  };
+  resizeComponents() {
+    // Map height 2/3 of window - navbar height
+    this.mapHeight = 2 * (window.innerHeight - 100) / 3;
+    // Table height 1/3 of window - navbar height
+    this.tableHeight = window.innerHeight - 100 - this.mapHeight;
+
+    // Set max page size for data table rows
+    // Each row is 37px, subtract 1 to leave some bottom margin
+    // Limit to 2 rows minimum
+    this.pageSize = Math.max(2, Math.floor(this.tableHeight / 37) - 1);
+  }
+
+  // Format timestamps to local time
+  formatTime(timestampISO8601) {
+    let utc = new Date(timestampISO8601).getTime();
+    let ict = utc + 3600 * 7 * 1000; // Add 7 hours for UTC+7
+    let timestring = new Date(ict).toISOString();
+    timestring = timestring.split('T'); // Split time and ate
+    let t1 = timestring[1].slice(0, 5); // Extract HH:MM
+    let d1 = timestring[0].split('-'); // Extract DD-MM-YY
+    let d2 = d1[2] + '-' + d1[1] + '-' + d1[0];
+    return (t1 + ' ' + d2);
+  }
+
+  updateFloodArea(e) {
+    return new Promise((resolve, reject) => {
+      let selArea = this.floods.features.find((flood) =>
+        flood.properties.area_id === e.target.feature.properties.area_id);
+
+      // Update the selected area and selected district
+      this.selectedDistrict = selArea.properties.parent_name;
+      this.districtChanged(this.selectedDistrict);
+      resolve(selArea);
+    });
+  }
 
   attached() {
+    // Set height on initiation
+    this.resizeComponents();
+
+    // Update height on browser window resize
+    window.onresize = () => this.resizeComponents();
 
     // Create map
     this.map = L.map('mapContainer', {
@@ -62,15 +99,18 @@ export class Map {
     }).fitBounds([config.bounds.sw, config.bounds.ne]);
 
     // Scale
-    L.control.scale({position:'bottomright', metric:true, imperial:false}).addTo(this.map);
+    L.control.scale({
+      position: 'bottomright',
+      metric: true,
+      imperial: false
+    }).addTo(this.map);
 
     // Reports table
     let reportsControl = L.Control.extend({
       options: {
-        position:'bottomleft'
+        position: 'bottomleft'
       },
       onAdd: function(map) {
-
         let div = L.DomUtil.create('div', 'leaflet-control-reports-button');
         div.setAttribute('data-toggle', 'modal');
         div.setAttribute('href', '#reportsModal');
@@ -83,15 +123,15 @@ export class Map {
     this.map.addControl(new reportsControl);
 
     // Legend
-    var mapKey = L.Control.extend({
+    let mapKey = L.Control.extend({
       options: {
-        position:'bottomright'
+        position: 'bottomright'
       },
       onAdd: function(map) {
-        var container = L.DomUtil.create('div', 'info legend');
+        let container = L.DomUtil.create('div', 'info legend');
 
         // reports
-        container.innerHTML += '<div id="reportsLegend"><div class="sublegend"><div><img src="assets/icons/floodsIcon.svg" height="22px;" width="auto" /><span>&nbsp; Laporan Banjir</span></div></div></div>'
+        container.innerHTML += '<div id="reportsLegend"><div class="sublegend"><div><img src="assets/icons/floodsIcon.svg" height="22px;" width="auto" /><span>&nbsp; Laporan Banjir</span></div></div></div>';
 
         // flood extents
 	      container.innerHTML += '<div id="heightsLegend"><div class="sublegend"><div style="font-weight:bold">Tinggi Banjir</div><div><i class="color" style="background:#CC2A41;"></i><span>&nbsp;&gt; 150 cm</span></div><div><i class="color" style="background:#FF8300"></i><span>&nbsp;71 cm &ndash; 150 cm </span></div><div><i class="color" style="background:#FFFF00"></i><span>&nbsp;10 cm &ndash; 70 cm</span></div><i class="color" style="background:#A0A9F7"></i><span>&nbsp;Hati-hati</span></div></div>';
@@ -158,17 +198,15 @@ export class Map {
           layer.on({
             mouseover: highlightFeature,
             mouseout: (e) => {
-              if (this.currentFeature === null){
+              if (this.currentFeature === null) {
                 this.floodLayer.resetStyle(e.target);
-                }
-
-              else if (e.target !== this.currentFeature.target) {
+              } else if (e.target !== this.currentFeature.target) {
                 this.floodLayer.resetStyle(e.target);
               }
             },
             click: (e) => {
               // Release selection of previous feature
-              if (this.currentFeature !== null){
+              if (this.currentFeature !== null) {
                 this.floodLayer.resetStyle(this.currentFeature.target);
               }
 
@@ -180,26 +218,24 @@ export class Map {
               });
 
               // Zoom to a given feature
-              this.map.fitBounds(e.target.getBounds(), {maxZoom:14});
+              this.map.fitBounds(e.target.getBounds(), {maxZoom: 14});
 
-              // Update the selected area and selected district
-              this.selectedArea = this.floods.features.find((flood) =>
-                flood.properties.area_id === e.target.feature.properties.area_id)
-              this.selectedDistrict = this.selectedArea.properties.parent_name;
-              this.districtChanged(this.selectedDistrict);
-
-              // Select the area in the table
-              this.selectedArea.$isSelected = true;
-              this.tableApi.revealItem(this.selectedArea);
+              this.updateFloodArea(e)
+              .then((selArea) => {
+                // Select the area in the table
+                this.selectedArea = selArea;
+                this.selectedArea.$isSelected = true;
+                this.tableApi.revealItem(selArea);
+              });
 
               this.currentFeature = e;
             }
           });
         }
-      }).addTo(this.map);;
+      }).addTo(this.map);
 
       // Fit the bounds to flood layer
-      this.map.fitBounds(this.floodLayer.getBounds())
+      this.map.fitBounds(this.floodLayer.getBounds());
 
       // Initialise the districts list
       this.initDistricts();
@@ -224,12 +260,12 @@ export class Map {
     this.reportsLayer = L.geoJSON(null, {
       pointToLayer: (feature, latlng) => {
         return L.marker(latlng, {
-                icon: L.icon({
-                  iconUrl: `assets/icons/floodsIcon.svg`,
-                  iconSize: [30, 30],
-                  iconAnchor: [15, 15]
-                })
-              })
+          icon: L.icon({
+            iconUrl: 'assets/icons/floodsIcon.svg',
+            iconSize: [30, 30],
+            iconAnchor: [15, 15]
+          })
+        });
       },
       onEachFeature: (feature, layer) => {
         this.reportsLayerFeatureMap[feature.properties.pkey] = layer;
@@ -239,7 +275,7 @@ export class Map {
             $('#myModal .modal-title').html(feature.properties.title || 'Laporan banjir');
             $('#myModal .modal-body').html('<div id="modalContent"></div>');
             $('#modalContent').append(feature.properties.text);
-            if (feature.properties.image_url){
+            if (feature.properties.image_url) {
               $('#modalContent').append("<div><img src='" + feature.properties.image_url + "' width=300px></div>");
             }
             $('#myModal .modal-footer').html(formatTime(feature.properties.created_at));
@@ -250,30 +286,30 @@ export class Map {
     });
     this.reportsLayer.addTo(this.map);
 
-    this.gaugeIcons = function(level){
-    	switch (level) {
-    		case 1:
-    			return {'color':'#FF4000','icon':'assets/icons/floodgauge_1.png'};
-    		case 2:
-    			return {'color':'#FF8000','icon':'assets/icons/floodgauge_2.png'};
-    		case 3:
-    			return {'color':'#F7D358','icon':'assets/icons/floodgauge_3.png'};
-    		default:
-    			return {'color':'#01DF01','icon':'assets/icons/floodgauge.png'};
-    	}
+    this.gaugeIcons = function(level) {
+      switch (level) {
+      case 1:
+        return {'color': '#FF4000', 'icon': 'assets/icons/floodgauge_1.png'};
+      case 2:
+        return {'color': '#FF8000', 'icon': 'assets/icons/floodgauge_2.png'};
+      case 3:
+        return {'color': '#F7D358', 'icon': 'assets/icons/floodgauge_3.png'};
+      default:
+        return {'color': '#01DF01', 'icon': 'assets/icons/floodgauge.png'};
+      }
     };
 
     // Create flood gauge layer and add to the map
     this.gaugeLayer = L.geoJSON(null, {
       pointToLayer: (feature, latlng) => {
         return L.marker(latlng, {
-                icon: L.icon({
-                  iconUrl: this.gaugeIcons(feature.properties.observations[feature.properties.observations.length-1].f3).icon,
-                  iconSize: [22,22],
-    							iconAnchor: [11, 11],
-    							popupAnchor: [0, 0]
-                })
-              })
+          icon: L.icon({
+            iconUrl: this.gaugeIcons(feature.properties.observations[feature.properties.observations.length - 1].f3).icon,
+            iconSize: [22, 22],
+            iconAnchor: [11, 11],
+            popupAnchor: [0, 0]
+          })
+        });
       },
       onEachFeature: (feature, layer) => {
         layer.on({
@@ -545,11 +581,9 @@ export class Map {
 
     // Once the API action has been resolved refresh the table and map
     Promise.all(promises).then((data) => {
-
-        // Refresh the flood states
-        this.refreshFloodStates();
-
-      })
+      // Refresh the flood states
+      this.refreshFloodStates();
+    })
       .catch((err) => {
         this.error = err.message;
         this.refreshing = false;
@@ -573,15 +607,13 @@ export class Map {
     let promises = [];
 
     flooded.map((flood) => {
-      promises.push(this.api.deleteFloodState(flood.properties.area_id, this.profile ? this.profile.email : 'rem'))
+      promises.push(this.api.deleteFloodState(flood.properties.area_id, this.profile ? this.profile.email : 'rem'));
     });
 
     // When all flood states have been cleared
     Promise.all(promises).then(() => {
-
       // Refresh the flood states
       this.refreshFloodStates();
-
     }).catch((err) => {
       this.error = err.message;
       this.refreshing = false;

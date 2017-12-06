@@ -47,7 +47,8 @@ export class Map {
     this.floodStates = env.floodStates;
     this.loadTable = loadTable;
     this.mapHeight = 800; // Set a default height
-    this.pageSize = 4;
+    this.pageSize = 4; // Set a default table row display size
+    this.counter = 0; // TODO: remove before merge to master
   }
 
   resizeComponents() {
@@ -205,6 +206,13 @@ export class Map {
               }
             },
             click: (e) => {
+              // TODO: remove before merge to master
+              // this.counter += 1;
+              // console.log(this.counter + ': '
+              // + e.target.feature.properties.area_id
+              // + ', Parent: '
+              // + e.target.feature.properties.parent_name);
+
               // Release selection of previous feature
               if (this.currentFeature !== null) {
                 this.floodLayer.resetStyle(this.currentFeature.target);
@@ -421,7 +429,7 @@ export class Map {
   // Can this view be activated i.e. is there a valid token?
   canActivate() {
     // Check if token is expired and redirect if so
-    if (tokenIsExpired()) return new Redirect('/');
+    // if (tokenIsExpired()) return new Redirect('/');
     return true;
   }
 
@@ -435,17 +443,17 @@ export class Map {
     this.tableData = this.floods.features
       .filter((flood) => flood.properties.parent_name === district)
       .sort((a, b) => {
-        if (a.properties.area_name < b.properties.area_name)
-        return -1;
-        if (a.properties.area_name > b.properties.area_name)
-        return 1;
+        if (a.properties.area_name < b.properties.area_name) {
+          return -1;
+        }
+        if (a.properties.area_name > b.properties.area_name) {
+          return 1;
+        }
         return 0;
       });
     let targetArea = this.tableData[0].properties.area_id;
     let layer = this.floodLayer.getLayer(this.floodDict[targetArea]._leaflet_id);
-    this.map.fitBounds(layer.getBounds(),{maxZoom: 14});
-
-    //this.map.fitBounds(this.tableData[0].geometry)
+    this.map.fitBounds(layer.getBounds(), {maxZoom: 14});
   }
 
   // Refresh the current flood states

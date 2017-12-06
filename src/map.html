@@ -19,7 +19,7 @@
     <div class="btn-toolbar">
       <div class="row">
         <div class="col-md-4 text-left">
-          <select value.bind="selectedDistrict" change.delegate="districtChanged(selectedDistrict)" class="select-district">
+          <select value.bind="selectedDistrict" change.delegate="districtChanged(selectedDistrict)" class="select-district" ref="districtMenu">
             <option value.bind="null">${!districts ? 'Loading' : 'Kelurahan'}</option>
             <option repeat.for="district of districts" value.bind="district">${district}</option>
           </select>
@@ -35,7 +35,7 @@
           <div class="pull-right" style="visibility: ${refreshing ? 'visible' : 'hidden'}">
             <img class="spinner" src="assets/icons/spinner.svg"/>
           </div>
-          <div class="pull-right" style="visibility: ${refreshing ? 'hidden' : 'visible'}; padding: 0;">
+          <div class="pull-right" if.bind="districtMenu.value !== 'null'" style="visibility: ${refreshing ? 'hidden' : 'visible'}; padding: 0;">
             <aut-pagination current-page.bind="currentPage" page-size.bind="pageSize" total-items.bind="totalItems">
               <template replace-part="pagination">
                 <ul class="custom-pagination" hide.bind="hideSinglePage && totalPages === 1">

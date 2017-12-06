@@ -38,7 +38,7 @@ export function loadTable(reports) {
 		}
 
 		rows +='<tr>';
-			rows += '<td>SPAM</td>'; // Time
+			rows += '<td>' + formatTime(report.created_at) + '</td>'; // Time
 			rows += '<td><a data-dismiss="modal" href="map" onclick="window.centreMapOnPopup('+report.pkey+')")>'+text+'</a></td>'; // Message
 		rows += '</tr>';
 	}

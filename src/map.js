@@ -6,7 +6,7 @@ import * as L from 'leaflet';
 import Chart from 'chartjs';
 
 import { API } from './api';
-import { tokenIsExpired, getProfile } from './utils';
+import { tokenIsExpired, getProfile, formatTime } from './utils';
 import { loadTable } from './reports';
 
 // Import environment variables
@@ -52,18 +52,6 @@ export class Map {
     this.mapHeight = ( window.innerHeight * 0.66 ) - 100;
     // Table height should be half the map height
     this.tableHeight = this.mapHeight * 0.5;
-  };
-
-  // Format timestamps to local time
-  formatTime(timestamp_ISO8601){
-    let utc = new Date(timestamp_ISO8601).getTime();
-    let ict = utc + 3600 * 7 * 1000; // Add 7 hours for UTC+7
-    let timestring = new Date(ict).toISOString();
-    timestring = timestring.split('T'); // Split time and ate
-    let t1 = timestring[1].slice(0,5); // Extract HH:MM
-    let d1 = timestring[0].split('-'); // Extract DD-MM-YY
-    let d2 = d1[2]+'-'+d1[1]+'-'+d1[0];
-    return (t1 + ' ' + d2);
   };
 
   attached() {
@@ -254,7 +242,7 @@ export class Map {
             if (feature.properties.image_url){
               $('#modalContent').append("<div><img src='" + feature.properties.image_url + "' width=300px></div>");
             }
-            $('#myModal .modal-footer').html(this.formatTime(feature.properties.created_at));
+            $('#myModal .modal-footer').html(formatTime(feature.properties.created_at));
             $('#myModal').modal();
           }
         });

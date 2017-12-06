@@ -3,7 +3,7 @@
   <require from="bootstrap/css/bootstrap.css"></require>
   <require from="./styles.css"></require>
 
-  <nav class="navbar navbar-default navbar-static-top" role="navigation">
+  <nav class="navbar navbar-default navbar-static-top" role="navigation" style="margin-bottom: 0px;">
     <div class="container-fluid">
       <div class="navbar-header">
         <a route-href="route: home">
@@ -23,8 +23,8 @@
     </div>
   </nav>
 
-  <div class="container-fluid">
-    <div class="row">
+  <div class="container-fluid" style="padding:0px;">
+    <div class="row no-gutters">
       <router-view class="col-md-12"></router-view>
     </div>
   </div>

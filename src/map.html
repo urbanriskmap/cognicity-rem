@@ -35,6 +35,31 @@
           <div class="pull-right" style="visibility: ${refreshing ? 'visible' : 'hidden'}">
             <img class="spinner" src="assets/icons/spinner.svg"/>
           </div>
+          <div class="pull-right" style="visibility: ${refreshing ? 'hidden' : 'visible'}; padding: 0;">
+            <aut-pagination current-page.bind="currentPage" page-size.bind="pageSize" total-items.bind="totalItems">
+              <template replace-part="pagination">
+                <ul class="custom-pagination" hide.bind="hideSinglePage && totalPages === 1">
+                  <li>
+                    <a aria-label="Previous" click.delegate="previousPage()" class-name.bind="currentPage === 1 ? 'disabled' : ''">
+                      <span aria-hidden="true">«</span>
+                    </a>
+                  </li>
+
+                  <li repeat.for="page of displayPages">
+                    <a click.delegate="selectPage(page.value)" class-name.bind="currentPage === page.value ? 'active' : ''">
+                      ${page.title}
+                    </a>
+                  </li>
+
+                  <li>
+                    <a aria-label="Next" click.delegate="nextPage()" class-name.bind="currentPage === totalPages ? 'disabled' : ''">
+                      <span aria-hidden="true">»</span>
+                    </a>
+                  </li>
+                </ul>
+              </template>
+            </aut-pagination>
+          </div>
         </div>
       </div>
     </div>
@@ -42,7 +67,7 @@
     <!-- Data Table -->
     <div id="tableContainer" style="overflow-y: scroll; height:${tableHeight}px;">
       <table class="table table-striped" aurelia-table="data.bind: tableData;
-        display-data.bind: $areas; api.bind: tableApi;">
+        display-data.bind: $areas; api.bind: tableApi; current-page.bind: currentPage; page-size.bind: pageSize; total-items.bind: totalItems;">
         <thead>
           <tr>
             <th class="col-md-1">ID</th>

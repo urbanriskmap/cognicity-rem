@@ -143,7 +143,7 @@ export class Map {
         gaugeLevelNames[2] = 'Siaga II';
         gaugeLevelNames[3] = 'Siaga III';
         gaugeLevelNames[4] = 'Siaga IV';
-        container.innerHTML += '<div id="gaugesLegend"><div class="sublegend"><div style="font-weight:bold">Tinggi Muka Air</div><div><img src="assets/icons/floodgauge_1.png" height="18px;" width="auto" /><span>&nbsp;'+gaugeLevelNames[1]+'</span></div><div><img src="assets/icons/floodgauge_2.png" height="18px;" width="auto" /><span>&nbsp;'+gaugeLevelNames[2]+'</span></div><div><img src="assets/icons/floodgauge_3.png" height="18px;" width="auto" /><span>&nbsp;'+gaugeLevelNames[3]+'</span></div><div><img src="assets/icons/floodgauge.png" height="18px;" width="auto" /><span>&nbsp;'+gaugeLevelNames[4]+'</span></div></div>';
+        container.innerHTML += '<div id="gaugesLegend"><div class="sublegend"><div style="font-weight:bold">Tinggi Muka Air</div><div><img src="assets/icons/floodgauge_1.svg" height="24px;" width="auto" /><span>&nbsp;'+gaugeLevelNames[1]+'</span></div><div><img src="assets/icons/floodgauge_2.svg" height="24px;" width="auto" /><span>&nbsp;'+gaugeLevelNames[2]+'</span></div><div><img src="assets/icons/floodgauge_3.svg" height="24px;" width="auto" /><span>&nbsp;'+gaugeLevelNames[3]+'</span></div><div><img src="assets/icons/floodgauge_4.svg" height="24px;" width="auto" /><span>&nbsp;'+gaugeLevelNames[4]+'</span></div></div>';
 
         return container;
       }
@@ -297,13 +297,13 @@ export class Map {
     this.gaugeIcons = function(level) {
       switch (level) {
       case 1:
-        return {'color': '#FF4000', 'icon': 'assets/icons/floodgauge_1.png'};
+        return {'color': '#FF4000', 'icon': 'assets/icons/floodgauge_1.svg'};
       case 2:
-        return {'color': '#FF8000', 'icon': 'assets/icons/floodgauge_2.png'};
+        return {'color': '#FF8000', 'icon': 'assets/icons/floodgauge_2.svg'};
       case 3:
-        return {'color': '#F7D358', 'icon': 'assets/icons/floodgauge_3.png'};
+        return {'color': '#F7D358', 'icon': 'assets/icons/floodgauge_3.svg'};
       default:
-        return {'color': '#01DF01', 'icon': 'assets/icons/floodgauge.png'};
+        return {'color': '#01DF01', 'icon': 'assets/icons/floodgauge_4.svg'};
       }
     };
 

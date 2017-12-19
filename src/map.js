@@ -297,13 +297,13 @@ export class Map {
     this.gaugeIcons = function(level) {
       switch (level) {
       case 1:
-        return {'color': '#FF4000', 'icon': 'assets/icons/floodgauge_1.svg'};
+        return {'icon': 'assets/icons/floodgauge_1.svg'};
       case 2:
-        return {'color': '#FF8000', 'icon': 'assets/icons/floodgauge_2.svg'};
+        return {'icon': 'assets/icons/floodgauge_2.svg'};
       case 3:
-        return {'color': '#F7D358', 'icon': 'assets/icons/floodgauge_3.svg'};
+        return {'icon': 'assets/icons/floodgauge_3.svg'};
       default:
-        return {'color': '#01DF01', 'icon': 'assets/icons/floodgauge_4.svg'};
+        return {'icon': 'assets/icons/floodgauge_4.svg'};
       }
     };
 
@@ -322,6 +322,9 @@ export class Map {
       onEachFeature: (feature, layer) => {
         layer.on({
           click: (e) => {
+            // Select icon
+
+            // Draw graph
             $('#myModal .modal-title').html(feature.properties.gaugenameid)
             $('#myModal .modal-body').html('<canvas id="modalChart" width="400" height="200"></canvas>');
             $('#myModal .modal-footer').empty();

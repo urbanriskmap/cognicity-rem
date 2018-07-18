@@ -54,7 +54,7 @@ export class App {
     // Once authenticated save the id_token and profile to local storage
     this.lock.on('authenticated', (authResult) => {
       self.landingMessage = 'loading...'
-      self.lock.getProfile(authResult.idToken, (error, profile) => {
+      self.lock.getProfile(authResult.accessToken, (error, profile) => {
         if (error) {
           // Handle error
           return;

@@ -19,6 +19,7 @@ export class App {
 
   // Setup the Lock, disabling the signup option
   lock = new Auth0Lock(AUTH0_CLIENT_ID, AUTH0_DOMAIN, {
+    configurationBaseUrl: 'https://cdn.au.auth0.com',
     allowSignUp: false
   });
   isAuthenticated = false;

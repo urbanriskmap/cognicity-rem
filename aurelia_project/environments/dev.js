@@ -3,7 +3,7 @@ export default {
   testing: true,
   dataUrl: 'https://data-dev.petabencana.id',
   AUTH0_CLIENT_ID: 'ApdfZvV1BrxXmwdg6Djrle4m2nav5ub9',
-  AUTH0_DOMAIN: 'petabencana.au.auth0.com',
+  AUTH0_DOMAIN: 'auth.petabencana.id',
   floodStates: [
     {
       level: null,

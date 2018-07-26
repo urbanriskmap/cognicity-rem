@@ -2,7 +2,7 @@ export default {
   debug: true,
   testing: true,
   dataUrl: 'https://data-dev.petabencana.id',
-  AUTH0_CLIENT_ID: 'ApdfZvV1BrxXmwdg6Djrle4m2nav5ub9',
+  AUTH0_CLIENT_ID: 'hla07C0C009nXLXhov2Vaqxx7Nj4PIpz',
   AUTH0_DOMAIN: 'auth.petabencana.id',
   floodStates: [
     {

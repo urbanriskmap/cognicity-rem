@@ -22,6 +22,15 @@ export class App {
     configurationBaseUrl: 'https://cdn.au.auth0.com',
     allowSignUp: false
   });
+
+  webAuth = new auth0.WebAuth({
+    domain: AUTH0_DOMAIN,
+    clientID: AUTH0_CLIENT_ID,
+    responseType: 'token id_token',
+    scope: 'openid',
+    redirectUri: 'http://localhost:9000'
+  });
+
   isAuthenticated = false;
   isEditor = false;
   username = null;
@@ -47,6 +56,8 @@ export class App {
         this.username = profile.email;
       }
     }
+
+
 
     // Once authenticated save the id_token and profile to local storage
     this.lock.on('authenticated', (authResult) => {
@@ -81,7 +92,8 @@ export class App {
   }
 
   login() {
-    this.lock.show();
+    //this.lock.show();
+     this.webAuth.authorize();
   }
 
   logout() {
@@ -89,6 +101,10 @@ export class App {
     localStorage.removeItem('id_token');
     this.isAuthenticated = false;
     // Redirect to the home view
+    this.webAuth.logout({
+      returnTo: 'http://localhost:9000',
+      clientID: AUTH0_CLIENT_ID
+    });
     this.router.navigate('');
   }
 }

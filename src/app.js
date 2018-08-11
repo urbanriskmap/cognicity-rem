@@ -23,12 +23,8 @@ export class App {
   loginToggled = false;
   landingMessage = 'Silakan login untuk mengakses peta';
 
-  constructor(api, i18n, router) {
-    this.api = api;
-    this.i18n = i18n;
-    this.router = router;
-    let self = this;
 
+  checkIfLoggedIn(){
     // If the token has expired log the user out
     if (tokenIsExpired()) {
       this.isAuthenticated = false;
@@ -42,6 +38,19 @@ export class App {
         this.username = profile.email;
       }
     }
+  }
+
+  constructor(api, i18n, router) {
+    this.api = api;
+    this.i18n = i18n;
+    this.router = router;
+    let self = this;
+    self.checkIfLoggedIn();
+    document.addEventListener('auth-changed',function(){
+      self.checkIfLoggedIn();
+    });
+
+
 
   }
 

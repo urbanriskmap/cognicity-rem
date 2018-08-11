@@ -60,6 +60,7 @@ export function handleAuthentication(router) {
         localStorage.setItem('id_token', authResult.idToken);
         localStorage.setItem('profile', JSON.stringify(profile));
         router.navigate('map');
+        document.dispatchEvent(new Event('auth-changed'));
       });
 
     } else if (err) {

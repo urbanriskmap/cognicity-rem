@@ -75,7 +75,7 @@ export class API {
   getFloodgauges = () => new Promise((resolve, reject) => {
     // Authentication headers
     let auth = { headers: { 'Authorization': 'Bearer ' + localStorage.getItem('id_token') } };
-    return this.http.fetch('https://data.petabencana.id/floodgauges', auth)
+    return this.http.fetch(`${DATA_URL}/floodgauges`, auth)
     .then((response) => {
       if (response.status >= 400) reject(new Error('Unexpected error retrieving infrastructure'));
       response.json().then((data) => resolve(convertTopoToGeo(data)));

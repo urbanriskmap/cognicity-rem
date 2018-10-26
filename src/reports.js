@@ -1,11 +1,15 @@
 /**
  * Generate a table based on the provided reports
- *@file JavaScript to display confirmed reports within map (PetaJakarta.org) via map.js
- *@copyright (c) Tomas Holderness & SMART Infrastructure Facility January 2014
- *@module reports
+ * @file JavaScript to display confirmed reports within map (PetaJakarta.org) via map.js
+ * @copyright (c) Tomas Holderness & SMART Infrastructure Facility January 2014
+ * @license GPL-3.0
+ * @module reports
  *
  * @param {object} reports - a GeoJSON object
  */
+
+import { formatTime } from './utils';
+
 export function loadTable(reports) {
 	var rows, thead;
 
@@ -34,7 +38,7 @@ export function loadTable(reports) {
 		}
 
 		rows +='<tr>';
-			rows += '<td>' + report.created_at.substring(11, 19) + '</td>'; // Time
+			rows += '<td>' + formatTime(report.created_at).slice(0,5) + '</td>'; // Time
 			rows += '<td><a data-dismiss="modal" href="map" onclick="window.centreMapOnPopup('+report.pkey+')")>'+text+'</a></td>'; // Message
 		rows += '</tr>';
 	}

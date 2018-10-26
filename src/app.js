@@ -1,8 +1,7 @@
 import { inject } from 'aurelia-framework';
 import { I18N } from 'aurelia-i18n';
-
 import { API } from './api';
-import { tokenIsExpired, getProfile } from './utils';
+import { tokenIsExpired, getProfile, auth_login, auth_logout } from './utils';
 import { Router } from 'aurelia-router';
 
 // Import environment variables
@@ -18,26 +17,14 @@ if (!AUTH0_CLIENT_ID || !AUTH0_DOMAIN) throw new Error('Auth0 credentials are re
 @inject(API, I18N, Router)
 export class App {
 
-  // Setup the Lock, disabling the signup option
-  lock = new Auth0Lock(AUTH0_CLIENT_ID, AUTH0_DOMAIN, {
-    configurationBaseUrl: 'https://cdn.au.auth0.com',
-    allowSignUp: false,
-    auth: {
-      responseType: 'token id_token'
-    }
-  });
   isAuthenticated = false;
   isEditor = false;
   username = null;
   loginToggled = false;
-  landingMessage = "Silakan login untuk mengakses peta"
+  landingMessage = 'Silakan login untuk mengakses peta';
 
-  constructor(api, i18n, router) {
-    this.api = api;
-    this.i18n = i18n;
-    this.router = router;
-    let self = this;
 
+  checkIfLoggedIn(){
     // If the token has expired log the user out
     if (tokenIsExpired()) {
       this.isAuthenticated = false;
@@ -51,28 +38,20 @@ export class App {
         this.username = profile.email;
       }
     }
+  }
 
-
-
-    // Once authenticated save the id_token and profile to local storage
-    this.lock.on('authenticated', (authResult) => {
-      self.landingMessage = 'loading...'
-      self.lock.getProfile(authResult.accessToken, (error, profile) => {
-        if (error) {
-          // Handle error
-          return;
-        }
-        localStorage.setItem('id_token', authResult.idToken);
-        localStorage.setItem('profile', JSON.stringify(profile));
-        self.isEditor = profile.app_metadata && profile.app_metadata.role === 'editor';
-        self.username = profile.email;
-        self.isAuthenticated = true;
-        self.lock.hide();
-        // Redirect to the map view
-        this.router.navigate('map');
-        self.landingMessage = 'Silakan login untuk mengakses peta';
-      });
+  constructor(api, i18n, router) {
+    this.api = api;
+    this.i18n = i18n;
+    this.router = router;
+    let self = this;
+    self.checkIfLoggedIn();
+    document.addEventListener('auth-changed',function(){
+      self.checkIfLoggedIn();
     });
+
+
+
   }
 
   configureRouter(config, router) {
@@ -81,20 +60,21 @@ export class App {
     config.options.root = '/';
     config.map([
       { route: '', moduleId: 'home', name: 'home', title: 'Home' },
-      { route: 'map', moduleId: 'map', name: 'map', title: 'Map' }
+      { route: 'map', moduleId: 'map', name: 'map', title: 'Map' },
+      { route: 'callback', moduleId: 'callback', name: 'callback', title: 'Logging in' }
+
     ]);
     this.router = router;
   }
 
   login() {
-      this.lock.show();
+     auth_login();
   }
 
   logout() {
-    localStorage.removeItem('profile');
-    localStorage.removeItem('id_token');
     this.isAuthenticated = false;
     // Redirect to the home view
+    auth_logout();
     this.router.navigate('');
   }
 }

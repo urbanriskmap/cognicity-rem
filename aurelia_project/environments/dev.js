@@ -37,8 +37,8 @@ export default {
     reports_refresh: 60000, // Reports will refresh every 60 seconds
     gauges_refresh: 900000, // Gauges will refresh every 15 minutes
     bounds: {
-      sw: [-7.33525, 110.057],
-      ne: [-6.72701, 110.715]
+      sw: [-7.33525, 110.145],
+      ne: [-6.85, 110.625]
     },
     basemaps: [
       {

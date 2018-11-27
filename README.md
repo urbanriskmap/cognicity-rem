@@ -13,4 +13,4 @@ Cognicity REM Web Client v3
 
 ### To Build
 * To generate a production build
-    * Run `npm run build`
+    * Run `ENV=prod npm run build`

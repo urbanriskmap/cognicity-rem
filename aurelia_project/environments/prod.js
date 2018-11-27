@@ -2,7 +2,7 @@ export default {
   debug: false,
   testing: false,
   dataUrl: 'https://data.petabencana.id',
-  baseUrl: 'https://rem.petabencana.id',
+  baseUrl: 'https://semarang-rem.petabencana.id',
   AUTH0_CLIENT_ID: 'ApdfZvV1BrxXmwdg6Djrle4m2nav5ub9',
   AUTH0_DOMAIN: 'petabencana.au.auth0.com',
   floodStates: [
@@ -33,12 +33,12 @@ export default {
     }
   ],
   mapConfig: {
-    region: 'jbd',
+    region: 'srg',
     reports_refresh: 60000, // Reports will refresh every 60 seconds
     gauges_refresh: 900000, // Gauges will refresh every 15 minutes
     bounds: {
-      sw: [-6.733, 106.480],
-      ne: [-5.880, 107.175]
+      sw: [-7.33525, 110.145],
+      ne: [-6.85, 110.625]
     },
     basemaps: [
       {

@@ -34,7 +34,7 @@ export class App {
       this.isAuthenticated = true;
       let profile = getProfile();
       if (profile) {
-        this.isEditor = profile.app_metadata && profile.app_metadata.role === 'editor';
+        this.isEditor = profile.app_metadata && profile.app_metadata.role === 'editor-srg';
         this.username = profile.email;
       }
     }

@@ -243,7 +243,7 @@ export class Map {
       }).addTo(this.map);
 
       // Fit the bounds to flood layer
-      this.map.fitBounds(this.floodLayer.getBounds());
+      //this.map.fitBounds(this.floodLayer.getBounds());
 
       // Initialise the districts list
       this.initDistricts();

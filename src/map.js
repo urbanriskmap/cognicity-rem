@@ -227,6 +227,7 @@ export class Map {
 
               // Zoom to a given feature
               this.map.fitBounds(e.target.getBounds(), {maxZoom: 14});
+              this.map.invalidateSize();
 
               this.updateFloodArea(e)
               .then((selArea) => {

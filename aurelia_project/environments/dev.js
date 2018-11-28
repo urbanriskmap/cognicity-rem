@@ -2,7 +2,7 @@ export default {
   debug: true,
   testing: true,
   dataUrl: 'https://data-dev.petabencana.id',
-  baseUrl: 'https://semarang-rem.petabencana.id',
+  baseUrl: 'https://semarang-rem-dev.petabencana.id',
   AUTH0_CLIENT_ID: 'hla07C0C009nXLXhov2Vaqxx7Nj4PIpz',
   AUTH0_DOMAIN: 'petabencana-dev.au.auth0.com',
   floodStates: [
